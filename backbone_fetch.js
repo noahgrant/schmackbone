@@ -1,6 +1,6 @@
-import _ from 'underscore';
-import Backbone from 'backbone';
-import {stringify} from 'qs';
+const _ = require('underscore');
+const Backbone = require('backbone');
+const {stringify} = require('qs');
 
 const backboneSync = Backbone.sync.bind(Backbone);
 
@@ -36,7 +36,7 @@ Backbone.ajaxPrefilter = _.identity;
  * using promises via the native `window.fetch`. This also auto-stringifies
  * application/json body data.
  */
-Backbone.ajax = function(options={}) {
+Backbone.ajax = function(options = {}) {
   var hasData = !!_.size(options.data),
       hasBodyContent = !/^(?:GET|HEAD)$/.test(options.type) && hasData;
 
@@ -56,16 +56,16 @@ Backbone.ajax = function(options={}) {
       //  * default to x-www-form-urlencoded. Backbone will pass application/json
       //    and JSON-stringify options.data for save/destroy calls, but we'll do
       //    it here for our own POST requests via fetch calls that Backbone doesn't cover
-      ...(hasBodyContent ? {'Content-Type': options.contentType || MIME_TYPE_DEFAULT} : {}),
+      ...hasBodyContent ? {'Content-Type': options.contentType || MIME_TYPE_DEFAULT} : {},
       ...options.headers
     },
-    ...(hasBodyContent ? {
+    ...hasBodyContent ? {
       body: typeof options.data === 'string' ?
         options.data :
         options.contentType === MIME_TYPE_JSON ?
           JSON.stringify(options.data) :
           stringify(options.data)
-    } : {})
+    } : {}
   }).then((res) => {
     // make a copy of the response object and place it into the options
     // `response` property we created before Backbone.sync. This will make it
@@ -77,7 +77,7 @@ Backbone.ajax = function(options={}) {
 
     // catch block here handles the case where the response isn't valid json,
     // like for example a 204 no content
-    return res.json().catch(() => ({}))
-        .then((json) => res.ok ? json : Promise.reject(_.extend({}, res, {json})));
+    return res.json()['catch'](() => ({}))
+      .then((json) => res.ok ? json : Promise.reject(_.extend({}, res, {json})));
   }).then(options.success, options.error).then(options.complete || _.noop);
 };
