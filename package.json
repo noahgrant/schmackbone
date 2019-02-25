@@ -1,6 +1,6 @@
 {
-  "name": "backbone",
-  "description": "Give your JS App some Backbone with Models, Views, Collections, and Events.",
+  "name": "blindbone",
+  "description": "jQuery-less and View-less Fork of BackboneJS",
   "url": "http://backbonejs.org",
   "keywords": [
     "model",
@@ -13,6 +13,7 @@
   ],
   "author": "Jeremy Ashkenas",
   "dependencies": {
+    "qs": "^6.5.2",
     "underscore": ">=1.8.3"
   },
   "devDependencies": {
