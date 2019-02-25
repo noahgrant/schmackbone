@@ -223,17 +223,4 @@
     });
     assert.strictEqual(this.ajaxSettings.beforeSend(xhr), false);
   });
-
-  QUnit.test('#2928 - Pass along `textStatus` and `errorThrown`.', function(assert) {
-    assert.expect(2);
-    var model = new Backbone.Model;
-    model.url = '/test';
-    model.on('error', function(m, xhr, options) {
-      assert.strictEqual(options.textStatus, 'textStatus');
-      assert.strictEqual(options.errorThrown, 'errorThrown');
-    });
-    model.fetch();
-    this.ajaxSettings.error({}, 'textStatus', 'errorThrown');
-  });
-
 })(QUnit);
