@@ -14,23 +14,24 @@
 
   // Set up Backbone appropriately for the environment. Start with AMD.
   if (typeof define === 'function' && define.amd) {
-    define(['underscore', 'exports'], function(_, exports) {
+    define(['underscore', 'exports', 'qs'], function(_, exports, {stringify}) {
       // Export global even in AMD case in case this script is loaded with
       // others that may still expect a global Backbone.
-      root.Backbone = factory(root, exports, _);
+      root.Backbone = factory(root, exports, _, stringify);
     });
 
   // Next for Node.js or CommonJS.
   } else if (typeof exports !== 'undefined') {
     var _ = require('underscore');
-    factory(root, exports, _);
+    var {stringify}  = require('qs');
+    factory(root, exports, _, stringify);
 
   // Finally, as a browser global.
   } else {
-    root.Backbone = factory(root, {}, root._);
+    root.Backbone = factory(root, {}, root._, root.stringify);
   }
 
-})(function(root, Backbone, _) {
+})(function(root, Backbone, _, stringify) {
 
   // Initial Setup
   // -------------
@@ -1392,6 +1393,15 @@
     // Default JSON-request options.
     var params = {type: type, dataType: 'json'};
 
+    // Backbone creates an `xhr` property on the options object for its default
+    // xhr request made via jquery. Using window.fetch this becomes just a
+    // reference to a Promise, and not very useful. So here we attach a response
+    // object that we mutate directly with the request's response object. Note
+    // that we the original options object passed to fetch/save/destroy calls (and
+    // kept in closure) is not the same one passed to Backbone.ajax. It's a copy,
+    // and so we must modify the response object directly for it to be passed through.
+    options.response = {};
+
     // Ensure that we have a URL.
     if (!options.url) {
       params.url = _.result(model, 'url') || urlError();
@@ -1446,10 +1456,69 @@
     read: 'GET'
   };
 
-  // Set the default implementation of `Backbone.ajax` to proxy through to `$`.
-  // Override this if you'd like to use a different library.
-  Backbone.ajax = function() {
-    return Backbone.$.ajax.apply(Backbone.$, arguments);
+  // override this to provide custom request options manipulation before a request
+  // goes out, for example, to add auth headers to the `headers` property, or to
+  // custom wrap the error callback in the `error` property
+  Backbone.ajaxPrefilter = _.identity;
+
+  const MIME_TYPE_JSON = 'application/json';
+  const MIME_TYPE_DEFAULT = 'application/x-www-form-urlencoded; charset=UTF-8';
+
+  /**
+   * This is our jquery-less override to Backbone's ajax functionality. It mirrors
+   * jquery's $.ajax in a few ways, for example, the `hasBodyContent` to
+   * conditionally add Content-Type headers, and to default to
+   * x-www-form-urlencoded data. It also has a `complete` callback that we can
+   * eventually use in a Promise.finally when we don't need to polyfill that. Its
+   * success and error handlers have similar signatures (via Backbone) to their
+   * jquery counterparts. Of course, the main difference with jquery is that we're
+   * using promises via the native `window.fetch`. This also auto-stringifies
+   * application/json body data.
+   */
+  Backbone.ajax = function(options) {
+    var hasData = !!_.size(options.data),
+        hasBodyContent = !/^(?:GET|HEAD)$/.test(options.type) && hasData;
+
+    if (options.type === 'GET' && hasData) {
+      options.url += (options.url.indexOf('?') > -1 ? '&' : '?') + stringify(options.data);
+    }
+
+    options = Backbone.ajaxPrefilter(options);
+
+    return window.fetch(options.url, _.extend(options, _.extend({
+      method: options.type,
+      headers: _.extend(
+        {Accept: MIME_TYPE_JSON},
+        // mock jquery behavior here as we migrate off of it:
+        //  * only set contentType header if a write request and if there is body data
+        //  * default to x-www-form-urlencoded. Backbone will pass application/json
+        //    and JSON-stringify options.data for save/destroy calls, but we'll do
+        //    it here for our own POST requests via fetch calls that Backbone doesn't cover
+        hasBodyContent ? {'Content-Type': options.contentType || MIME_TYPE_DEFAULT} : {},
+        options.headers
+      )
+    },
+    hasBodyContent ? {
+      body: typeof options.data === 'string' ?
+        options.data :
+        options.contentType === MIME_TYPE_JSON ?
+          JSON.stringify(options.data) :
+          stringify(options.data)
+    } : {})
+    )).then((res) => {
+      // make a copy of the response object and place it into the options
+      // `response` property we created before Backbone.sync. This will make it
+      // available in our success callbacks. Note that our error callbacks will
+      // have it, as well, but they will also get it directly from the rejected
+      // promise. we use _.extend instead of Object.assign because none of the
+      // Response properties are enumerable
+      _.extend(options.response, res);
+
+      // catch block here handles the case where the response isn't valid json,
+      // like for example a 204 no content
+      return res.json()['catch'](() => ({}))
+        .then((json) => res.ok ? json : Promise.reject(_.extend({}, res, {json})));
+    }).then(options.success, options.error).then(options.complete || _.noop);
   };
 
   // Backbone.Router
