@@ -1,34 +1,53 @@
-     ____                     __      __
-    /\  _`\                  /\ \    /\ \                                   __
-    \ \ \ \ \     __      ___\ \ \/'\\ \ \____    ___     ___      __      /\_\    ____
-     \ \  _ <'  /'__`\   /'___\ \ , < \ \ '__`\  / __`\ /' _ `\  /'__`\    \/\ \  /',__\
-      \ \ \ \ \/\ \ \.\_/\ \__/\ \ \\`\\ \ \ \ \/\ \ \ \/\ \/\ \/\  __/  __ \ \ \/\__, `\
-       \ \____/\ \__/.\_\ \____\\ \_\ \_\ \_,__/\ \____/\ \_\ \_\ \____\/\_\_\ \ \/\____/
-        \/___/  \/__/\/_/\/____/ \/_/\/_/\/___/  \/___/  \/_/\/_/\/____/\/_/\ \_\ \/___/
-                                                                           \ \____/
-                                                                            \/___/
-    (_'_______________________________________________________________________________'_)
-    (_.———————————————————————————————————————————————————————————————————————————————._)
+                       __      __
+                      /\ \    /\ \                                   __
+           __      ___\ \ \/'\\ \ \____    ___     ___      __      /\_\    ____
+         /'__`\   /'___\ \ , < \ \ '__`\  / __`\ /' _ `\  /'__`\    \/\ \  /',__\
+   SCHM-/\ \ \.\_/\ \__/\ \ \\`\\ \ \ \ \/\ \ \ \/\ \/\ \/\  __/  __ \ \ \/\__, `\
+        \ \__/.\_\ \____\\ \_\ \_\ \_,__/\ \____/\ \_\ \_\ \____\/\_\_\ \ \/\____/
+         \/__/\/_/\/____/ \/_/\/_/\/___/  \/___/  \/_/\/_/\/____/\/_/\ \_\ \/___/
+                                                                    \ \____/
+                                                                     \/___/
+ (_'______________________________________________________________________________'_)
+ (_.——————————————————————————————————————————————————————————————————————————————._)
 
+## Schmackbone.js
 
-Backbone supplies structure to JavaScript-heavy applications by providing models with key-value binding and custom events, collections with a rich API of enumerable functions, views with declarative event handling, and connects it all to your existing application over a RESTful JSON interface.
+Schmackbone is a fork of the established MV-library [Backbone](https://github.com/jashkenas/backbone), with the View-logic and
+jQuery removed. `Backbone.ajax` uses the Promise-based `window.fetch`. This all happens under the hood; you can use model methods
+like `.fetch()`, `.destroy()`, and `.save()` like you would normally - you just won't be using jQuery.
 
-For Docs, License, Tests, pre-packed downloads, and everything else, really, see:
-http://backbonejs.org
+#### .ajaxPrefilter
 
-To suggest a feature or report a bug:
-https://github.com/jashkenas/backbone/issues
+Schmackbone does offer one hook into the ajax method, `Backbone.ajaxPrefilter`, which allows you to alter the [options object]()
+passed to `Backbone.ajax` before any requests are made. Use this hook to pass custom headers like auth headers, or a custom
+global error handler:
 
-For questions on working with Backbone or general discussions:
-https://groups.google.com/forum/#!forum/backbonejs,
-http://stackoverflow.com/questions/tagged/backbone.js, or
-https://gitter.im/jashkenas/backbone
+```js
+// usage:
+// @param {object} options object
+// @return {object} modified options object
+Backbone.ajaxPrefilter = (options={}) => {
+  const originalErrorCallback = options.error;
 
-Backbone is an open-sourced component of DocumentCloud:
-https://github.com/documentcloud
+  return {
+    ...options,
+    error: (response) => {
+      if (response.status === 401) {
+        // refresh auth token logic
+      } else if (response.status === 429) {
+        // do some rate-limiting retry logic
+      }
 
-Many thanks to our contributors:
-https://github.com/jashkenas/backbone/graphs/contributors
+      originalErrorCallback(response);
+    },
+    headers: {
+      ...options.headers,
+      Authorization: `Bearer ${localStorage.getItem('super-secret-auth-token')}`
+    }
+  };
+};
+```
 
-Special thanks to Robert Kieffer for the original philosophy behind Backbone.
-https://github.com/broofa
+By default, Backbone.ajaxPrefilter is set to the identity function.
+
+For Backbone-related information, see [the website](https://backbonejs.org) and especially its [annotated source page]().
