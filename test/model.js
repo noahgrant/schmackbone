@@ -217,14 +217,14 @@
     assert.strictEqual(model.has('name'), false);
 
     model.set({
-      '0': 0,
-      '1': 1,
-      'true': true,
-      'false': false,
-      'empty': '',
-      'name': 'name',
-      'null': null,
-      'undefined': undefined
+      0: 0,
+      1: 1,
+      true: true,
+      false: false,
+      empty: '',
+      name: 'name',
+      null: null,
+      undefined: undefined
     });
 
     assert.strictEqual(model.has('0'), true);
@@ -883,17 +883,17 @@
   QUnit.test("Nested change events don't clobber previous attributes", function(assert) {
     assert.expect(4);
     new Backbone.Model()
-    .on('change:state', function(m, newState) {
-      assert.equal(m.previous('state'), undefined);
-      assert.equal(newState, 'hello');
-      // Fire a nested change event.
-      m.set({other: 'whatever'});
-    })
-    .on('change:state', function(m, newState) {
-      assert.equal(m.previous('state'), undefined);
-      assert.equal(newState, 'hello');
-    })
-    .set({state: 'hello'});
+      .on('change:state', function(m, newState) {
+        assert.equal(m.previous('state'), undefined);
+        assert.equal(newState, 'hello');
+        // Fire a nested change event.
+        m.set({other: 'whatever'});
+      })
+      .on('change:state', function(m, newState) {
+        assert.equal(m.previous('state'), undefined);
+        assert.equal(newState, 'hello');
+      })
+      .set({state: 'hello'});
   });
 
   QUnit.test('hasChanged/set should use same comparison', function(assert) {
@@ -902,10 +902,10 @@
     model.on('change', function() {
       assert.ok(this.hasChanged('a'));
     })
-    .on('change:a', function() {
-      changed++;
-    })
-    .set({a: undefined});
+      .on('change:a', function() {
+        changed++;
+      })
+      .set({a: undefined});
     assert.equal(changed, 1);
   });
 
@@ -1263,12 +1263,12 @@
     var done = assert.async();
     assert.expect(2);
     new Backbone.Model()
-    .on('sync', function() { assert.ok(false); })
-    .on('destroy', function(){ assert.ok(true); })
-    .destroy({success: function(){
-      assert.ok(true);
-      done();
-    }});
+      .on('sync', function() { assert.ok(false); })
+      .on('destroy', function(){ assert.ok(true); })
+      .destroy({success: function(){
+        assert.ok(true);
+        done();
+      }});
   });
 
   QUnit.test('#1433 - Save: An invalid model cannot be persisted.', function(assert) {
@@ -1314,8 +1314,8 @@
       }
     });
     new Model({x: true})
-    .on('change:x', function(){ assert.ok(false); })
-    .save(null, {wait: true});
+      .on('change:x', function(){ assert.ok(false); })
+      .save(null, {wait: true});
   });
 
   QUnit.test('#1664 - Changing from one value, silently to another, back to original triggers a change.', function(assert) {

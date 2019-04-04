@@ -9,12 +9,12 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
-        'test/vendor/jquery.js',
-        'test/vendor/json2.js',
-        'test/vendor/underscore.js',
-        'backbone.js',
-        'test/setup/*.js',
-        'test/*.js'
+      'test/vendor/jquery.js',
+      'test/vendor/json2.js',
+      'test/vendor/underscore.js',
+      'backbone.js',
+      'test/setup/*.js',
+      'test/*.js'
     ],
 
     // test results reporter to use
@@ -35,20 +35,16 @@ module.exports = function(config) {
     // enable / disable watching file and executing tests whenever any file changes
     autoWatch: false,
 
-    // start these browsers
-    // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    browsers: ['PhantomJS'],
-
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
     singleRun: true,
 
-    // See http://stackoverflow.com/a/27873086/1517919
+    browsers: ['ChromeCustom'],
     customLaunchers: {
-        Chrome_sandbox: {
-            base: 'Chrome',
-            flags: ['--no-sandbox']
-        }
+      ChromeCustom: {
+        base: 'ChromeHeadless',
+        flags: ['--no-sandbox']
+      }
     }
   });
 };
