@@ -5,11 +5,11 @@
 module.exports = function(config) {
   config.set({
     basePath: '',
-    frameworks: ['qunit'],
+    frameworks: ['qunit', 'sinon'],
 
     // list of files / patterns to load in the browser
     files: [
-      'test/vendor/jquery.js',
+      'node_modules/qs/dist/qs.js',
       'test/vendor/json2.js',
       'test/vendor/underscore.js',
       'backbone.js',

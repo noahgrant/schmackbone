@@ -22,10 +22,10 @@
     "eslint": "^4.19.1",
     "karma": "^0.13.13",
     "karma-chrome-launcher": "^2.2.0",
-    "karma-phantomjs-launcher": "^1.0.0",
     "karma-qunit": "^1.0.0",
-    "phantomjs-prebuilt": "^2.1.7",
+    "karma-sinon": "^1.0.5",
     "qunitjs": "^2.0.0",
+    "sinon": "^7.3.1",
     "uglify-js": "^2.4.17"
   },
   "scripts": {

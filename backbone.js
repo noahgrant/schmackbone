@@ -28,7 +28,7 @@
 
   // Finally, as a browser global.
   } else {
-    root.Backbone = factory(root, {}, root._, root.stringify);
+    root.Backbone = factory(root, {}, root._, (root.Qs || {}).stringify);
   }
 
 })(function(root, Backbone, _, stringify) {
