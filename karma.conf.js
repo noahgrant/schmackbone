@@ -12,7 +12,7 @@ module.exports = function(config) {
       'node_modules/qs/dist/qs.js',
       'test/vendor/json2.js',
       'test/vendor/underscore.js',
-      'backbone.js',
+      'schmackbone.js',
       'test/setup/*.js',
       'test/*.js'
     ],

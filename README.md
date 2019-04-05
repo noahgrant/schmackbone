@@ -1,3 +1,4 @@
+```
                        __      __
                       /\ \    /\ \                                   __
            __      ___\ \ \/'\\ \ \____    ___     ___      __      /\_\    ____
@@ -9,6 +10,7 @@
                                                                      \/___/
  (_'______________________________________________________________________________'_)
  (_.——————————————————————————————————————————————————————————————————————————————._)
+```
 
 ## Schmackbone.js
 
@@ -16,9 +18,10 @@ Schmackbone is a fork of the established MV-library [Backbone](https://github.co
 jQuery removed. `Backbone.ajax` uses the Promise-based `window.fetch`. This all happens under the hood; you can use model methods
 like `.fetch()`, `.destroy()`, and `.save()` like you would normally - you just won't be using jQuery.
 
-#### .ajaxPrefilter
+#### Backbone.ajaxPrefilter
 
-Schmackbone does offer one hook into the ajax method, `Backbone.ajaxPrefilter`, which allows you to alter the [options object]()
+Schmackbone does offer one hook into the ajax method, `Backbone.ajaxPrefilter`, which allows you to alter the
+[options object](https://github.com/noahgrant/schmackbone/blob/1e3c385be522ddb0938f1552cef9620dedd4eb0f/schmackbone.js#L1486)
 passed to `Backbone.ajax` before any requests are made. Use this hook to pass custom headers like auth headers, or a custom
 global error handler:
 
@@ -48,6 +51,6 @@ Backbone.ajaxPrefilter = (options={}) => {
 };
 ```
 
-By default, Backbone.ajaxPrefilter is set to the identity function.
+By default, `Backbone.ajaxPrefilter` is set to the identity function.
 
-For Backbone-related information, see [the website](https://backbonejs.org) and especially its [annotated source page]().
+For Backbone-related information, see [the website](https://backbonejs.org) and especially its [annotated source page](https://backbonejs.org/docs/backbone.html).
