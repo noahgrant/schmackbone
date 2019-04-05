@@ -6,7 +6,7 @@
     "QUnit": false,
     "Backbone": true,
     "_": true,
-    "$": true
+    "sinon": true
   },
   "rules": {
     "no-throw-literal": 0,

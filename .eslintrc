@@ -14,8 +14,7 @@
   },
   "globals": {
     "attachEvent": false,
-    "detachEvent": false,
-    "sinon": true
+    "detachEvent": false
   },
   "rules": {
     "array-bracket-spacing": 2,
