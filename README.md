@@ -21,10 +21,10 @@ like `.fetch()`, `.destroy()`, and `.save()` like you would normally - you just 
 ## Why?
 
 While creating a Backbone view layer feels a little 2012, its Models and Collections are actually a very light and easy abstraction
-for interacting with REST APIs. Additionally, it's basic Events module make it a cinch to pub/sub your model changes to your actual
-view layer, for example, your React Components. This allows for some really elegant abstractions without the heaviness of, for example
-Redux, all while keeping your data in your models as your single-source-of-truth, instead of immediately copying an API response as local
-component state (denormalization). More to come on this!
+for interacting with REST APIs. Additionally, its basic Events module make it a cinch to pub/sub your model changes to your actual
+view layer, for example, your React Components. This allows for some really elegant abstractions without the heaviness of a full-blown
+state manager like Redux. You can keep your UI-state local and your data-state in your models (as your single-source-of-truth), instead
+of immediately denormalizing an API response as local component state. More to come on this!
 
 ## Practical Differences to Backbone
 
