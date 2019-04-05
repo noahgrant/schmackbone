@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 var _ = require('underscore');
 
 // Browsers to run on Sauce Labs platforms
@@ -37,14 +38,14 @@ var sauceBrowsers = _.reduce([
   // internet explorer -> ie
   var label = platform[0].split(' ');
   if (label.length > 1) {
-    label = _.invoke(label, 'charAt', 0)
+    label = _.invoke(label, 'charAt', 0);
   }
-  label = (label.join("") + '_v' + platform[1]).replace(' ', '_').toUpperCase();
+  label = (label.join('') + '_v' + platform[1]).replace(' ', '_').toUpperCase();
   memo[label] = _.pick({
-    'base': 'SauceLabs',
-    'browserName': platform[0],
-    'version': platform[1],
-    'platform': platform[2]
+    base: 'SauceLabs',
+    browserName: platform[0],
+    version: platform[1],
+    platform: platform[2]
   }, Boolean);
   return memo;
 }, {});
@@ -57,18 +58,24 @@ module.exports = function(config) {
 
   config.set({
     basePath: '',
-    frameworks: ['qunit'],
-    singleRun: true,
+    frameworks: ['qunit', 'sinon'],
 
     // list of files / patterns to load in the browser
     files: [
-        'test/vendor/jquery.js',
-        'test/vendor/json2.js',
-        'test/vendor/underscore.js',
-        'backbone.js',
-        'test/setup/*.js',
-        'test/*.js'
+      'node_modules/qs/dist/qs.js',
+      'test/vendor/json2.js',
+      'test/vendor/underscore.js',
+      'schmackbone.js',
+      'test/setup/*.js',
+      'test/*.js'
     ],
+
+    // level of logging
+    // possible values: config.LOG_DISABLE || config.LOG_ERROR || config.LOG_WARN || config.LOG_INFO || config.LOG_DEBUG
+    logLevel: config.LOG_INFO,
+
+    // enable / disable watching file and executing tests whenever any file changes
+    autoWatch: false,
 
     // Number of sauce tests to start in parallel
     concurrency: 9,
@@ -77,7 +84,6 @@ module.exports = function(config) {
     reporters: ['dots', 'saucelabs'],
     port: 9876,
     colors: true,
-    logLevel: config.LOG_INFO,
     sauceLabs: {
       build: 'TRAVIS #' + process.env.TRAVIS_BUILD_NUMBER + ' (' + process.env.TRAVIS_BUILD_ID + ')',
       startConnect: true,
@@ -92,3 +98,4 @@ module.exports = function(config) {
     browsers: _.keys(sauceBrowsers)
   });
 };
+/* eslint-enable no-console */
