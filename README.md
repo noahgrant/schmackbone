@@ -51,6 +51,8 @@ Backbone.ajaxPrefilter = (options={}) => {
 
   return {
     ...options,
+    // if you want to default all api requests to json
+    contentType: 'application/json',
     error: (response) => {
       if (response.status === 401) {
         // refresh auth token logic
