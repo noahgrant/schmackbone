@@ -595,12 +595,11 @@
     fetch: function(options) {
       options = _.extend({parse: true}, options);
       var model = this;
-      var success = options.success;
       options.success = function(resp) {
         var serverAttrs = options.parse ? model.parse(resp, options) : resp;
         if (!model.set(serverAttrs, options)) return false;
-        if (success) success.call(options.context, model, resp, options);
         model.trigger('sync', model, resp, options);
+        return [model, resp, options];
       };
       wrapError(this, options);
       return this.sync('read', this, options);
@@ -634,7 +633,6 @@
       // After a successful server-side save, the client is (optionally)
       // updated with the server-side state.
       var model = this;
-      var success = options.success;
       var attributes = this.attributes;
       options.success = function(resp) {
         // Ensure attributes are restored during synchronous saves.
@@ -642,8 +640,8 @@
         var serverAttrs = options.parse ? model.parse(resp, options) : resp;
         if (wait) serverAttrs = _.extend({}, attrs, serverAttrs);
         if (serverAttrs && !model.set(serverAttrs, options)) return false;
-        if (success) success.call(options.context, model, resp, options);
         model.trigger('sync', model, resp, options);
+        return [model, resp, options];
       };
       wrapError(this, options);
 
@@ -666,7 +664,6 @@
     destroy: function(options) {
       options = options ? _.clone(options) : {};
       var model = this;
-      var success = options.success;
       var wait = options.wait;
 
       var destroy = function() {
@@ -676,17 +673,18 @@
 
       options.success = function(resp) {
         if (wait) destroy();
-        if (success) success.call(options.context, model, resp, options);
         if (!model.isNew()) model.trigger('sync', model, resp, options);
+        return [model, resp, options];
       };
 
       var xhr = false;
       if (this.isNew()) {
-        _.defer(options.success);
-      } else {
-        wrapError(this, options);
-        xhr = this.sync('delete', this, options);
+        return Promise.resolve().then(options.success);
       }
+
+      wrapError(this, options);
+      xhr = this.sync('delete', this, options);
+
       if (!wait) destroy();
       return xhr;
     },
@@ -1048,13 +1046,12 @@
     // data will be passed through the `reset` method instead of `set`.
     fetch: function(options) {
       options = _.extend({parse: true}, options);
-      var success = options.success;
       var collection = this;
       options.success = function(resp) {
         var method = options.reset ? 'reset' : 'set';
         collection[method](resp, options);
-        if (success) success.call(options.context, collection, resp, options);
         collection.trigger('sync', collection, resp, options);
+        return [collection, resp, options];
       };
       wrapError(this, options);
       return this.sync('read', this, options);
@@ -1070,13 +1067,12 @@
       if (!model) return false;
       if (!wait) this.add(model, options);
       var collection = this;
-      var success = options.success;
       options.success = function(m, resp, callbackOpts) {
         if (wait) collection.add(m, callbackOpts);
-        if (success) success.call(callbackOpts.context, m, resp, callbackOpts);
+        return [m, resp, callbackOpts];
       };
-      model.save(null, options);
-      return model;
+      // TODO: return model or return xhr??
+      return model.save(null, options);
     },
 
     // **parse** converts a response into a list of models to be added to the
@@ -1436,11 +1432,6 @@
       params.processData = false;
     }
 
-    var error = options.error;
-    options.error = function(xhr) {
-      if (error) error.call(options.context, xhr);
-    };
-
     // Make the request, allowing the user to override any Ajax options.
     var xhr = options.xhr = Backbone.ajax(_.extend(params, options));
     model.trigger('request', model, xhr, options);
@@ -1518,7 +1509,7 @@
       // like for example a 204 no content
       return res.json()['catch'](() => ({}))
         .then((json) => res.ok ? json : Promise.reject(_.extend({}, res, {json})));
-    }).then(options.success, options.error).then(options.complete || _.noop);
+    }).then(options.success, options.error);
   };
 
   // Backbone.Router
@@ -1978,10 +1969,9 @@
 
   // Wrap an optional error callback with a fallback error event.
   var wrapError = function(model, options) {
-    var error = options.error;
     options.error = function(resp) {
-      if (error) error.call(options.context, model, resp, options);
       model.trigger('error', model, resp, options);
+      return Promise.reject([model, resp, options]);
     };
   };
 
