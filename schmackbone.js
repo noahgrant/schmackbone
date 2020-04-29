@@ -600,7 +600,11 @@
         var serverAttrs = options.parse ? model.parse(resp, options) : resp;
         if (!model.set(serverAttrs, options)) return false;
         model.trigger('sync', model, resp, options);
-        if (success) return success.call(options.context, model, resp, options);
+        if (success || options.complete) {
+          if (success) success.call(options.context, model, resp, options);
+          if (options.complete) options.complete();
+          return;
+        }
         return [model, resp, options];
       };
       wrapError(this, options);
@@ -644,7 +648,11 @@
         if (wait) serverAttrs = _.extend({}, attrs, serverAttrs);
         if (serverAttrs && !model.set(serverAttrs, options)) return false;
         model.trigger('sync', model, resp, options);
-        if (success) return success.call(options.context, model, resp, options);
+        if (success || options.complete) {
+          if (success) success.call(options.context, model, resp, options);
+          if (options.complete) options.complete();
+          return;
+        }
         return [model, resp, options];
       };
       wrapError(this, options);
@@ -665,8 +673,8 @@
     // Destroy this model on the server if it was already persisted.
     // Optimistically removes the model from its collection, if it has one.
     // If `wait: true` is passed, waits for the server to respond before removal.
-    destroy: function(options) {
-      options = options ? _.clone(options) : {};
+    destroy: function(options = {}) {
+      options = _.extend({}, options);
       var model = this;
       var success = options.success;
       var wait = options.wait;
@@ -679,17 +687,21 @@
       options.success = function(resp) {
         if (wait) destroy();
         if (!model.isNew()) model.trigger('sync', model, resp, options);
-        if (success) return success.call(options.context, model, resp, options);
+        if (success || options.complete) {
+          if (success) success.call(options.context, model, resp, options);
+          if (options.complete) options.complete();
+          return;
+        }
         return [model, resp, options];
       };
 
       var xhr = false;
       if (this.isNew()) {
-        return Promise.resolve().then(options.success);
+        Promise.resolve().then(options.success);
+      } else {
+        wrapError(this, options);
+        xhr = this.sync('delete', this, options);
       }
-
-      wrapError(this, options);
-      xhr = this.sync('delete', this, options);
 
       if (!wait) destroy();
       return xhr;
@@ -1058,7 +1070,11 @@
         var method = options.reset ? 'reset' : 'set';
         collection[method](resp, options);
         collection.trigger('sync', collection, resp, options);
-        if (success) return success.call(options.context, collection, resp, options);
+        if (success || options.complete) {
+          if (success) success.call(options.context, collection, resp, options);
+          if (options.complete) options.complete();
+          return;
+        }
         return [collection, resp, options];
       };
       wrapError(this, options);
@@ -1068,8 +1084,8 @@
     // Create a new instance of a model in this collection. Add the model to the
     // collection immediately, unless `wait: true` is passed, in which case we
     // wait for the server to agree.
-    create: function(model, options) {
-      options = options ? _.clone(options) : {};
+    create: function(model, options = {}) {
+      options = _.extend({}, options);
       var wait = options.wait;
       model = this._prepareModel(model, options);
       if (!model) return false;
@@ -1078,10 +1094,13 @@
       var success = options.success;
       options.success = function(m, resp, callbackOpts) {
         if (wait) collection.add(m, callbackOpts);
-        if (success) return success.call(callbackOpts.context, m, resp, callbackOpts);
+        if (success || options.complete) {
+          if (success) success.call(callbackOpts.context, m, resp, callbackOpts);
+          if (options.complete) options.complete();
+          return;
+        }
         return [m, resp, callbackOpts];
       };
-      // TODO: return model or return xhr??
       return model.save(null, options);
     },
 
@@ -1982,8 +2001,10 @@
     var error = options.error;
     options.error = function(resp) {
       model.trigger('error', model, resp, options);
-      if (error) {
-        return error.call(options.context, model, resp, options);
+      if (error || options.complete) {
+        if (error) error.call(options.context, model, resp, options);
+        if (options.complete) options.complete();
+        return;
       }
       return Promise.reject([model, resp, options]);
     };

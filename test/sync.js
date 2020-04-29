@@ -1,6 +1,6 @@
 (function(QUnit) {
 
-  var Library = Backbone.Collection.extend({
+  var Library = Schmackbone.Collection.extend({
     url: function() { return '/library'; }
   });
   var library;
@@ -11,7 +11,7 @@
     length: 123
   };
 
-  QUnit.module('Backbone.sync', {
+  QUnit.module('Schmackbone.sync', {
 
     beforeEach: function(assert) {
       library = new Library;
@@ -19,7 +19,7 @@
     },
 
     afterEach: function(assert) {
-      Backbone.emulateHTTP = false;
+      Schmackbone.emulateHTTP = false;
     }
 
   });
@@ -141,7 +141,7 @@
 
   QUnit.test('urlError', function(assert) {
     assert.expect(2);
-    var model = new Backbone.Model();
+    var model = new Schmackbone.Model();
     assert.raises(function() {
       model.fetch();
     });
@@ -151,63 +151,63 @@
 
   QUnit.test('#1052 - `options` is optional.', function(assert) {
     assert.expect(0);
-    var model = new Backbone.Model();
+    var model = new Schmackbone.Model();
     model.url = '/test';
-    Backbone.sync('create', model);
+    Schmackbone.sync('create', model);
   });
 
-  QUnit.test('Backbone.ajax', function(assert) {
+  QUnit.test('Schmackbone.ajax', function(assert) {
     assert.expect(1);
-    Backbone.ajax = function(settings) {
+    Schmackbone.ajax = function(settings) {
       assert.strictEqual(settings.url, '/test');
     };
-    var model = new Backbone.Model();
+    var model = new Schmackbone.Model();
     model.url = '/test';
-    Backbone.sync('create', model);
+    Schmackbone.sync('create', model);
   });
 
   QUnit.test('Call provided error callback on error.', function(assert) {
     assert.expect(1);
-    var model = new Backbone.Model;
+    var model = new Schmackbone.Model;
     model.url = '/test';
-    Backbone.sync('read', model, {
+    Schmackbone.sync('read', model, {
       error: function() { assert.ok(true); }
     });
     this.ajaxSettings.error();
   });
 
-  QUnit.test('Use Backbone.emulateHTTP as default.', function(assert) {
+  QUnit.test('Use Schmackbone.emulateHTTP as default.', function(assert) {
     assert.expect(2);
-    var model = new Backbone.Model;
+    var model = new Schmackbone.Model;
     model.url = '/test';
 
-    Backbone.emulateHTTP = true;
+    Schmackbone.emulateHTTP = true;
     model.sync('create', model);
     assert.strictEqual(this.ajaxSettings.emulateHTTP, true);
 
-    Backbone.emulateHTTP = false;
+    Schmackbone.emulateHTTP = false;
     model.sync('create', model);
     assert.strictEqual(this.ajaxSettings.emulateHTTP, false);
   });
 
-  QUnit.test('Use Backbone.emulateJSON as default.', function(assert) {
+  QUnit.test('Use Schmackbone.emulateJSON as default.', function(assert) {
     assert.expect(2);
-    var model = new Backbone.Model;
+    var model = new Schmackbone.Model;
     model.url = '/test';
 
-    Backbone.emulateJSON = true;
+    Schmackbone.emulateJSON = true;
     model.sync('create', model);
     assert.strictEqual(this.ajaxSettings.emulateJSON, true);
 
-    Backbone.emulateJSON = false;
+    Schmackbone.emulateJSON = false;
     model.sync('create', model);
     assert.strictEqual(this.ajaxSettings.emulateJSON, false);
   });
 
   QUnit.test('#1756 - Call user provided beforeSend function.', function(assert) {
     assert.expect(4);
-    Backbone.emulateHTTP = true;
-    var model = new Backbone.Model;
+    Schmackbone.emulateHTTP = true;
+    var model = new Schmackbone.Model;
     model.url = '/test';
     var xhr = {
       setRequestHeader: function(header, value) {

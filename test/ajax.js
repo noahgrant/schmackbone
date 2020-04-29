@@ -1,13 +1,13 @@
 ((QUnit, sinon) => {
-  const TestModel = Backbone.Model.extend({url: () => '/test_path'});
-  const originalAjax = Backbone.ajax.bind(Backbone);
+  const TestModel = Schmackbone.Model.extend({url: () => '/test_path'});
+  const originalAjax = Schmackbone.ajax.bind(Schmackbone);
   var waitsFor;
 
-  QUnit.module('Backbone.ajax', (hooks) => {
+  QUnit.module('Schmackbone.ajax', (hooks) => {
     hooks.beforeEach(() => {
       ({waitsFor} = QUnit.config.current.testEnvironment);
       // overrides test-suite-wide ajax stub, because here we stub window.fetch
-      Backbone.ajax = originalAjax;
+      Schmackbone.ajax = originalAjax;
       sinon.stub(window, 'fetch').callsFake(() => Promise.resolve(
         new Response(new Blob([{test: 'response!'}], {type: 'application/json'}), {status: 200})
       ));
@@ -26,8 +26,8 @@
     QUnit.test('adds a \'response\' property in the sync method', (assert) => {
       var options = {};
 
-      sinon.spy(Backbone, 'ajax');
-      Backbone.sync('fetch', new TestModel(), options);
+      sinon.spy(Schmackbone, 'ajax');
+      Schmackbone.sync('fetch', new TestModel(), options);
       assert.deepEqual(options.response, {});
     });
 
@@ -58,14 +58,14 @@
       QUnit.test('that defaults to the identity function', (assert) => {
         var options = {headers: {'Test Header': 'sometestheadervalue'}};
 
-        sinon.spy(Backbone, 'ajaxPrefilter');
-        sinon.spy(Backbone, 'ajax');
+        sinon.spy(Schmackbone, 'ajaxPrefilter');
+        sinon.spy(Schmackbone, 'ajax');
 
         new TestModel().fetch(options);
 
         assert.equal(
-          Backbone.ajaxPrefilter.lastCall.args[0],
-          Backbone.ajax.lastCall.args[0]
+          Schmackbone.ajaxPrefilter.lastCall.args[0],
+          Schmackbone.ajax.lastCall.args[0]
         );
 
         assert.deepEqual(window.fetch.lastCall.args[1].headers, {
@@ -77,23 +77,23 @@
       QUnit.test('that provides a hook for custom options meddling', (assert) => {
         var errorSpy = sinon.spy();
 
-        sinon.stub(Backbone, 'ajaxPrefilter').callsFake((options) => _.extend({}, options, {
+        sinon.stub(Schmackbone, 'ajaxPrefilter').callsFake((options) => _.extend({}, options, {
           error: errorSpy,
           headers: _.extend({}, options.headers, {Authorization: 'Bearer SECRET'})
         }));
-        sinon.spy(Backbone, 'ajax');
-        sinon.spy(Backbone, 'sync');
+        sinon.spy(Schmackbone, 'ajax');
+        sinon.spy(Schmackbone, 'sync');
 
         new TestModel().fetch();
 
-        assert.notOk(Backbone.ajax.lastCall.args[0].headers);
-        assert.notOk(Backbone.sync.lastCall.args[0].error);
+        assert.notOk(Schmackbone.ajax.lastCall.args[0].headers);
+        assert.notOk(Schmackbone.sync.lastCall.args[0].error);
         assert.ok(window.fetch.lastCall.args[1].headers.Authorization);
         assert.equal(window.fetch.lastCall.args[1].error, errorSpy);
 
         assert.equal(
-          Backbone.ajaxPrefilter.lastCall.args[0],
-          Backbone.ajax.lastCall.args[0]
+          Schmackbone.ajaxPrefilter.lastCall.args[0],
+          Schmackbone.ajax.lastCall.args[0]
         );
       });
     });
@@ -143,12 +143,12 @@
         // no body, so no body sent
         assert.notOk(!!window.fetch.lastCall.args[1].body);
 
-        sinon.spy(Backbone, 'ajax');
+        sinon.spy(Schmackbone, 'ajax');
 
         new TestModel().save({zorah: 'thefung', noah: 'thegrant'});
         // body should get JSON-stringified by backbone
         assert.equal(
-          Backbone.ajax.lastCall.args[0].data,
+          Schmackbone.ajax.lastCall.args[0].data,
           '{"zorah":"thefung","noah":"thegrant"}'
         );
         // and then it just gets passed directly
@@ -180,7 +180,7 @@
       var options = {},
           done = assert.async();
 
-      Backbone.sync('fetch', new TestModel(), options);
+      Schmackbone.sync('fetch', new TestModel(), options);
       await waitsFor(() => 'status' in options.response);
 
       assert.equal(options.response.status, 200);

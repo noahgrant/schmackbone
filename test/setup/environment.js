@@ -1,9 +1,9 @@
 (function(QUnit) {
 
-  var sync = Backbone.sync;
-  var ajax = Backbone.ajax;
-  var emulateHTTP = Backbone.emulateHTTP;
-  var emulateJSON = Backbone.emulateJSON;
+  var sync = Schmackbone.sync;
+  var ajax = Schmackbone.ajax;
+  var emulateHTTP = Schmackbone.emulateHTTP;
+  var emulateJSON = Schmackbone.emulateJSON;
   var history = window.history;
   var pushState = history.pushState;
   var replaceState = history.replaceState;
@@ -21,12 +21,12 @@
     history.pushState = history.replaceState = function() {};
 
     // Capture ajax settings for comparison.
-    Backbone.ajax = function(settings) {
+    Schmackbone.ajax = function(settings) {
       env.ajaxSettings = settings;
     };
 
-    // Capture the arguments to Backbone.sync for comparison.
-    Backbone.sync = function(method, model, options) {
+    // Capture the arguments to Schmackbone.sync for comparison.
+    Schmackbone.sync = function(method, model, options) {
       env.syncArgs = {
         method: method,
         model: model,
@@ -57,10 +57,10 @@
   });
 
   QUnit.testDone(function() {
-    Backbone.sync = sync;
-    Backbone.ajax = ajax;
-    Backbone.emulateHTTP = emulateHTTP;
-    Backbone.emulateJSON = emulateJSON;
+    Schmackbone.sync = sync;
+    Schmackbone.ajax = ajax;
+    Schmackbone.emulateHTTP = emulateHTTP;
+    Schmackbone.emulateJSON = emulateJSON;
     history.pushState = pushState;
     history.replaceState = replaceState;
   });
