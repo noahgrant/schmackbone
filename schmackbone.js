@@ -1,4 +1,4 @@
-//     Schmackbone.js 1.5.0
+//     Schmackbone.js 0.5.0
 
 //     (c) 2010-2019 Jeremy Ashkenas and DocumentCloud
 //     Schmackbone may be freely distributed under the MIT license.
@@ -603,7 +603,6 @@
         if (success || options.complete) {
           if (success) success.call(options.context, model, resp, options);
           if (options.complete) options.complete();
-          return;
         }
         return [model, resp, options];
       };
@@ -651,7 +650,6 @@
         if (success || options.complete) {
           if (success) success.call(options.context, model, resp, options);
           if (options.complete) options.complete();
-          return;
         }
         return [model, resp, options];
       };
@@ -690,14 +688,13 @@
         if (success || options.complete) {
           if (success) success.call(options.context, model, resp, options);
           if (options.complete) options.complete();
-          return;
         }
         return [model, resp, options];
       };
 
-      var xhr = false;
+      var xhr;
       if (this.isNew()) {
-        Promise.resolve().then(options.success);
+        xhr = Promise.resolve().then(options.success);
       } else {
         wrapError(this, options);
         xhr = this.sync('delete', this, options);
@@ -1073,7 +1070,6 @@
         if (success || options.complete) {
           if (success) success.call(options.context, collection, resp, options);
           if (options.complete) options.complete();
-          return;
         }
         return [collection, resp, options];
       };
@@ -1094,12 +1090,7 @@
       var success = options.success;
       options.success = function(m, resp, callbackOpts) {
         if (wait) collection.add(m, callbackOpts);
-        if (success || options.complete) {
-          if (success) success.call(callbackOpts.context, m, resp, callbackOpts);
-          if (options.complete) options.complete();
-          return;
-        }
-        return [m, resp, callbackOpts];
+        if (success) success.call(callbackOpts.context, m, resp, callbackOpts);
       };
       return model.save(null, options);
     },
@@ -1236,7 +1227,6 @@
 
   // Defining an @@iterator method implements JavaScript's Iterable protocol.
   // In modern ES2015 browsers, this value is found at Symbol.iterator.
-  /* global Symbol */
   var $$iterator = typeof Symbol === 'function' && Symbol.iterator;
   if ($$iterator) {
     Collection.prototype[$$iterator] = Collection.prototype.values;
@@ -1461,6 +1451,11 @@
       params.processData = false;
     }
 
+    var error = options.error;
+    options.error = function(xhr) {
+      if (error) error.call(options.context, xhr);
+    };
+
     // Make the request, allowing the user to override any Ajax options.
     var xhr = options.xhr = Schmackbone.ajax(_.extend(params, options));
     model.trigger('request', model, xhr, options);
@@ -1536,7 +1531,7 @@
 
       // catch block here handles the case where the response isn't valid json,
       // like for example a 204 no content
-      return res.json()['catch'](() => ({}))
+      return res.json().catch(() => ({}))
         .then((json) => res.ok ? json : Promise.reject(_.extend({}, res, {json})));
     }).then(options.success, options.error);
   };
@@ -2004,7 +1999,6 @@
       if (error || options.complete) {
         if (error) error.call(options.context, model, resp, options);
         if (options.complete) options.complete();
-        return;
       }
       return Promise.reject([model, resp, options]);
     };

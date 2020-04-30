@@ -11,7 +11,6 @@
     "client",
     "browser"
   ],
-  "author": "Jeremy Ashkenas",
   "dependencies": {
     "qs": "^6.5.2",
     "terser": "^4.6.12",
@@ -20,7 +19,7 @@
   "devDependencies": {
     "coffee-script": "1.7.1",
     "docco": "0.7.0",
-    "eslint": "^4.19.1",
+    "eslint": "^6.8.0",
     "karma": "^0.13.13",
     "karma-chrome-launcher": "^2.2.0",
     "karma-qunit": "^1.0.0",
@@ -42,9 +41,9 @@
     "url": "https://github.com/noahgrant/schmackbone.git"
   },
   "files": [
-    "backbone.js",
-    "backbone-min.js",
-    "backbone-min.map",
+    "schmackbone.js",
+    "schmackbone-min.js",
+    "schmackbone-min.map",
     "LICENSE"
   ]
 }

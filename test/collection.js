@@ -553,6 +553,58 @@
     collection.fetch(options);
   });
 
+  QUnit.test('fetch returns a promise that resolves an array of model and response', function(assert) {
+    assert.expect(4);
+    var done = assert.async();
+    var collection = new Schmackbone.Collection();
+    collection.sync = (method, model, options) => Promise.resolve('resolved').then(options.success);
+    collection.fetch().then(([model, resp, options]) => {
+      assert.equal(model, collection);
+      assert.equal(resp, 'resolved');
+
+      collection.sync = (_method, _model, _options) => Promise.reject('rejected').catch(_options.error);
+
+      collection.fetch().catch(([_model, _resp]) => {
+        assert.equal(_model, collection);
+        assert.equal(_resp, 'rejected');
+        done();
+      });
+    });
+  });
+
+  QUnit.test('fetch calls a success response if passed', function(assert) {
+    var obj = {};
+    var collection = new Schmackbone.Collection();
+    var options = {
+      context: obj,
+      success: function() {
+        assert.equal(this, obj);
+      }
+    };
+    collection.sync = function(method, model, opts) {
+      opts.success.call(opts.context);
+    };
+    collection.fetch(options);
+  });
+
+  QUnit.test('fetch calls a complete response if passed', function(assert) {
+    assert.expect(2);
+    var completed = false;
+    var collection = new Schmackbone.Collection();
+    var options = {complete: () => completed = true};
+    collection.sync = function(method, model, opts) {
+      opts.success.call(opts.context);
+    };
+    collection.fetch(options);
+    assert.equal(completed, true);
+    completed = false;
+    collection.sync = function(method, model, opts) {
+      opts.error.call(opts.context);
+    };
+    collection.fetch(options);
+    assert.equal(completed, true);
+  });
+
   QUnit.test('ensure fetch only parses once', function(assert) {
     assert.expect(1);
     var collection = new Schmackbone.Collection;
@@ -650,6 +702,85 @@
     var m = collection.findWhere({foo: 'bar'});
     assert.equal(m.validationError, 'fail');
     assert.equal(collection.length, 1);
+  });
+
+  QUnit.test('create with an error response calls error with context', function(assert) {
+    assert.expect(1);
+    var origSync = Schmackbone.Model.prototype.sync;
+    var collection = new Schmackbone.Collection();
+    var obj = {};
+    var options = {
+      context: obj,
+      error: function() {
+        assert.equal(this, obj);
+      }
+    };
+    Schmackbone.Model.prototype.sync = function(method, model, opts) {
+      opts.error.call(opts.context);
+    };
+    collection.create({}, options);
+    Schmackbone.Model.prototype.sync = origSync;
+  });
+
+  QUnit.test('create with an success response calls success with context', function(assert) {
+    assert.expect(1);
+    var origSync = Schmackbone.Model.prototype.sync;
+    var collection = new Schmackbone.Collection();
+    var obj = {};
+    var options = {
+      context: obj,
+      success: function() {
+        assert.equal(this, obj);
+      }
+    };
+    Schmackbone.Model.prototype.sync = function(method, model, opts) {
+      opts.success.call(opts.context);
+    };
+    collection.create({}, options);
+    Schmackbone.Model.prototype.sync = origSync;
+  });
+
+  QUnit.test('create returns a promise that resolves an array of model and response', function(assert) {
+    assert.expect(4);
+    var done = assert.async();
+    var origSync = Schmackbone.Model.prototype.sync;
+    var model = new Schmackbone.Model({id: 'foo'});
+    var collection = new Schmackbone.Collection();
+    Schmackbone.Model.prototype.sync = (method, _model, options) => Promise.resolve('resolved').then(options.success);
+    collection.create(model).then(([_model, _resp]) => {
+      assert.equal(_model, model);
+      assert.equal(_resp, 'resolved');
+
+      Schmackbone.Model.prototype.sync = (_method, __model, _options) => Promise.reject('rejected').catch(_options.error);
+      var model2 = new Schmackbone.Model({id: 'bar'});
+
+      collection.create(model2).catch(([__model, __resp]) => {
+        assert.equal(__model, model2);
+        assert.equal(__resp, 'rejected');
+        Schmackbone.Model.prototype.sync = origSync;
+        done();
+      });
+    });
+  });
+
+  QUnit.test('create calls a complete response if passed', function(assert) {
+    assert.expect(2);
+    var completed = false;
+    var origSync = Schmackbone.Model.prototype.sync;
+    var collection = new Schmackbone.Collection();
+    var options = {complete: () => completed = true};
+    Schmackbone.Model.prototype.sync = function(method, model, opts) {
+      opts.success.call(opts.context);
+    };
+    collection.create({}, options);
+    assert.equal(completed, true);
+    completed = false;
+    Schmackbone.Model.prototype.sync = function(method, model, opts) {
+      opts.error.call(opts.context);
+    };
+    collection.create({}, options);
+    assert.equal(completed, true);
+    Schmackbone.Model.prototype.sync = origSync;
   });
 
   QUnit.test('initialize', function(assert) {
@@ -1782,7 +1913,6 @@
   });
 
   QUnit.test('Collection implements Iterable, values is default iterator function', function(assert) {
-    /* global Symbol */
     var $$iterator = typeof Symbol === 'function' && Symbol.iterator;
     // This test only applies to environments which define Symbol.iterator.
     if (!$$iterator) {

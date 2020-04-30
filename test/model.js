@@ -621,6 +621,49 @@
     model.destroy(options);
   });
 
+  QUnit.test('save, fetch, destroy calls complete if passed', function(assert) {
+    assert.expect(6);
+    var completed = false;
+    var model = new Schmackbone.Model({id: 'foo'});
+    var options = {complete: () => completed = true};
+    ['save', 'fetch', 'destroy'].forEach((method) => {
+      var args = method === 'save' ? [{}, options] : [options];
+
+      model.sync = (_method, _model, opts) => opts.success();
+      model[method](...args);
+
+      assert.equal(completed, true);
+      completed = false;
+
+      model.sync = (_method, _model, opts) => opts.error();
+      model[method](...args);
+      assert.equal(completed, true);
+      completed = false;
+    });
+  });
+
+  QUnit.test('save, fetch, destroy return a promise that resolves an array of model and response', function(assert) {
+    assert.expect(12);
+    var done = assert.async();
+    Promise.all(['save', 'fetch', 'destroy'].map((method) => new Promise((res) => {
+      var model = new Schmackbone.Model({id: 'foo'});
+
+      model.sync = (meth, mod, options) => Promise.resolve('resolved').then(options.success);
+
+      model[method]({}).then(([_model, resp, options]) => {
+        assert.equal(_model, model);
+        assert.equal(resp, 'resolved');
+
+        model.sync = (meth, mod, _options) => Promise.reject('rejected').catch(options.error);
+        model[method]({}).catch(([__model, __resp, _options]) => {
+          assert.equal(__model, model);
+          assert.equal(__resp, 'rejected');
+          res();
+        });
+      });
+    }))).then(done);
+  });
+
   QUnit.test('#3470 - save and fetch with parse false', function(assert) {
     assert.expect(2);
     var i = 0;
@@ -746,7 +789,7 @@
     assert.ok(_.isEqual(this.syncArgs.model, doc));
 
     var newModel = new Schmackbone.Model;
-    assert.equal(newModel.destroy(), false);
+    assert.equal(newModel.destroy() instanceof Promise, true);
   });
 
   QUnit.test('destroy will pass extra options to success callback', function(assert) {
