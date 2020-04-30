@@ -1,17 +1,62 @@
-version: 2.1
-orbs:
-  node: circleci/node@1.1.6
+# Javascript Node CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-javascript/ for more details
+#
+defaults: &defaults
+  working_directory: /usr/src/app
+  docker:
+    - image: node:12
+
+version: 2
 jobs:
-  build-and-test:
-    executor:
-      name: node/default
+  test:
+    <<: *defaults
     steps:
       - checkout
-      - node/with-cache:
-          steps:
-            - run: npm install
-            - run: npm test
+      - restore_cache:
+          keys:
+            - node_modules-{{ checksum "package.json" }}
+            - node_modules- # used if checksum fails
+      - restore_cache:
+          keys:
+            - sysdeps-2
+
+      - run:
+          name: System deps
+          command: |
+            if [ ! -f /usr/src/app/deps/archives/google-chrome-stable_*_amd64.deb ] ; then
+              wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
+              sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
+              mkdir -p /usr/src/app/deps/archives/partial
+              apt-get update
+              apt-get install -y --download-only --option=dir::cache=/usr/src/app/deps google-chrome-stable
+            fi
+            dpkg -i /usr/src/app/deps/archives/*.deb
+
+      - run:
+          name: npm install
+          command: npm ci
+
+      - run:
+          name: Stylechecks
+          command: npm run lint
+
+      - run:
+          name: npm test
+          command: npm test
+
+      - save_cache:
+          key: node_modules-{{ checksum "package.json" }}
+          paths:
+            - node_modules
+
+      - save_cache:
+          key: sysdeps-2
+          paths:
+            - deps
+
 workflows:
-    build-and-test:
-      jobs:
-        - build-and-test
+  version: 2
+  test:
+    jobs:
+      - test
