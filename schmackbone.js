@@ -1,7 +1,7 @@
-//     Backbone.js 1.4.0
+//     Schmackbone.js 0.5.0
 
 //     (c) 2010-2019 Jeremy Ashkenas and DocumentCloud
-//     Backbone may be freely distributed under the MIT license.
+//     Schmackbone may be freely distributed under the MIT license.
 //     For all details and documentation:
 //     http://backbonejs.org
 
@@ -12,12 +12,12 @@
   var root = typeof self == 'object' && self.self === self && self ||
             typeof global == 'object' && global.global === global && global;
 
-  // Set up Backbone appropriately for the environment. Start with AMD.
+  // Set up Schmackbone appropriately for the environment. Start with AMD.
   if (typeof define === 'function' && define.amd) {
     define(['underscore', 'exports', 'qs'], function(_, exports, {stringify}) {
       // Export global even in AMD case in case this script is loaded with
-      // others that may still expect a global Backbone.
-      root.Backbone = factory(root, exports, _, stringify);
+      // others that may still expect a global Schmackbone.
+      root.Schmackbone = factory(root, exports, _, stringify);
     });
 
   // Next for Node.js or CommonJS.
@@ -28,43 +28,43 @@
 
   // Finally, as a browser global.
   } else {
-    root.Backbone = factory(root, {}, root._, (root.Qs || {}).stringify);
+    root.Schmackbone = factory(root, {}, root._, (root.Qs || {}).stringify);
   }
 
-})(function(root, Backbone, _, stringify) {
+})(function(root, Schmackbone, _, stringify) {
 
   // Initial Setup
   // -------------
 
-  // Save the previous value of the `Backbone` variable, so that it can be
+  // Save the previous value of the `Schmackbone` variable, so that it can be
   // restored later on, if `noConflict` is used.
-  var previousBackbone = root.Backbone;
+  var previousSchmackbone = root.Schmackbone;
 
   // Create a local reference to a common array method we'll want to use later.
   var slice = Array.prototype.slice;
 
   // Current version of the library. Keep in sync with `package.json`.
-  Backbone.VERSION = '1.4.0';
+  Schmackbone.VERSION = '1.5.0';
 
-  // Runs Backbone.js in *noConflict* mode, returning the `Backbone` variable
-  // to its previous owner. Returns a reference to this Backbone object.
-  Backbone.noConflict = function() {
-    root.Backbone = previousBackbone;
+  // Runs Schmackbone.js in *noConflict* mode, returning the `Schmackbone` variable
+  // to its previous owner. Returns a reference to this Schmackbone object.
+  Schmackbone.noConflict = function() {
+    root.Schmackbone = previousSchmackbone;
     return this;
   };
 
   // Turn on `emulateHTTP` to support legacy HTTP servers. Setting this option
   // will fake `"PATCH"`, `"PUT"` and `"DELETE"` requests via the `_method` parameter and
   // set a `X-Http-Method-Override` header.
-  Backbone.emulateHTTP = false;
+  Schmackbone.emulateHTTP = false;
 
   // Turn on `emulateJSON` to support legacy servers that can't deal with direct
   // `application/json` requests ... this will encode the body as
   // `application/x-www-form-urlencoded` instead and will send the model in a
   // form param named `model`.
-  Backbone.emulateJSON = false;
+  Schmackbone.emulateJSON = false;
 
-  // Backbone.Events
+  // Schmackbone.Events
   // ---------------
 
   // A module that can be mixed in to *any object* in order to provide it with
@@ -73,11 +73,11 @@
   // succession.
   //
   //     var object = {};
-  //     _.extend(object, Backbone.Events);
+  //     _.extend(object, Schmackbone.Events);
   //     object.on('expand', function(){ alert('expanded'); });
   //     object.trigger('expand');
   //
-  var Events = Backbone.Events = {};
+  var Events = Schmackbone.Events = {};
 
   // Regular expression used to split event strings.
   var eventSplitter = /\s+/;
@@ -149,7 +149,7 @@
     _listening = void 0;
 
     if (error) throw error;
-    // If the target obj is not Backbone.Events, track events manually.
+    // If the target obj is not Schmackbone.Events, track events manually.
     if (listening.interop) listening.on(name, callback);
 
     return this;
@@ -323,7 +323,7 @@
 
   // A difficult-to-believe, but optimized internal dispatch function for
   // triggering events. Tries to keep the usual cases speedy (most internal
-  // Backbone events have 3 arguments).
+  // Schmackbone events have 3 arguments).
   var triggerEvents = function(events, args) {
     var ev, i = -1, l = events.length, a1 = args[0], a2 = args[1], a3 = args[2];
     switch (args.length) {
@@ -349,7 +349,7 @@
   Listening.prototype.on = Events.on;
 
   // Offs a callback (or several).
-  // Uses an optimized counter if the listenee uses Backbone.Events.
+  // Uses an optimized counter if the listenee uses Schmackbone.Events.
   // Otherwise, falls back to manual tracking to support events
   // library interop.
   Listening.prototype.off = function(name, callback) {
@@ -377,21 +377,21 @@
   Events.bind   = Events.on;
   Events.unbind = Events.off;
 
-  // Allow the `Backbone` object to serve as a global event bus, for folks who
+  // Allow the `Schmackbone` object to serve as a global event bus, for folks who
   // want global "pubsub" in a convenient place.
-  _.extend(Backbone, Events);
+  _.extend(Schmackbone, Events);
 
-  // Backbone.Model
+  // Schmackbone.Model
   // --------------
 
-  // Backbone **Models** are the basic data object in the framework --
+  // Schmackbone **Models** are the basic data object in the framework --
   // frequently representing a row in a table in a database on your server.
   // A discrete chunk of data and a bunch of useful, related methods for
   // performing computations and transformations on that data.
 
   // Create a new model with the specified attributes. A client id (`cid`)
   // is automatically generated and assigned for you.
-  var Model = Backbone.Model = function(attributes, options) {
+  var Model = Schmackbone.Model = function(attributes, options) {
     var attrs = attributes || {};
     options || (options = {});
     this.preinitialize.apply(this, arguments);
@@ -436,10 +436,10 @@
       return _.clone(this.attributes);
     },
 
-    // Proxy `Backbone.sync` by default -- but override this if you need
+    // Proxy `Schmackbone.sync` by default -- but override this if you need
     // custom syncing semantics for *this* particular model.
     sync: function() {
-      return Backbone.sync.apply(this, arguments);
+      return Schmackbone.sync.apply(this, arguments);
     },
 
     // Get the value of an attribute.
@@ -599,8 +599,12 @@
       options.success = function(resp) {
         var serverAttrs = options.parse ? model.parse(resp, options) : resp;
         if (!model.set(serverAttrs, options)) return false;
-        if (success) success.call(options.context, model, resp, options);
         model.trigger('sync', model, resp, options);
+        if (success || options.complete) {
+          if (success) success.call(options.context, model, resp, options);
+          if (options.complete) options.complete();
+        }
+        return [model, resp, options];
       };
       wrapError(this, options);
       return this.sync('read', this, options);
@@ -642,8 +646,12 @@
         var serverAttrs = options.parse ? model.parse(resp, options) : resp;
         if (wait) serverAttrs = _.extend({}, attrs, serverAttrs);
         if (serverAttrs && !model.set(serverAttrs, options)) return false;
-        if (success) success.call(options.context, model, resp, options);
         model.trigger('sync', model, resp, options);
+        if (success || options.complete) {
+          if (success) success.call(options.context, model, resp, options);
+          if (options.complete) options.complete();
+        }
+        return [model, resp, options];
       };
       wrapError(this, options);
 
@@ -663,8 +671,8 @@
     // Destroy this model on the server if it was already persisted.
     // Optimistically removes the model from its collection, if it has one.
     // If `wait: true` is passed, waits for the server to respond before removal.
-    destroy: function(options) {
-      options = options ? _.clone(options) : {};
+    destroy: function(options = {}) {
+      options = _.extend({}, options);
       var model = this;
       var success = options.success;
       var wait = options.wait;
@@ -676,23 +684,28 @@
 
       options.success = function(resp) {
         if (wait) destroy();
-        if (success) success.call(options.context, model, resp, options);
         if (!model.isNew()) model.trigger('sync', model, resp, options);
+        if (success || options.complete) {
+          if (success) success.call(options.context, model, resp, options);
+          if (options.complete) options.complete();
+        }
+        return [model, resp, options];
       };
 
-      var xhr = false;
+      var xhr;
       if (this.isNew()) {
-        _.defer(options.success);
+        xhr = Promise.resolve().then(options.success);
       } else {
         wrapError(this, options);
         xhr = this.sync('delete', this, options);
       }
+
       if (!wait) destroy();
       return xhr;
     },
 
     // Default URL for the model's representation on the server -- if you're
-    // using Backbone's restful methods, override this to change the endpoint
+    // using Schmackbone's restful methods, override this to change the endpoint
     // that will be called.
     url: function() {
       var base =
@@ -738,10 +751,10 @@
 
   });
 
-  // Backbone.Collection
+  // Schmackbone.Collection
   // -------------------
 
-  // If models tend to represent a single row of data, a Backbone Collection is
+  // If models tend to represent a single row of data, a Schmackbone Collection is
   // more analogous to a table full of data ... or a small slice or page of that
   // table, or a collection of rows that belong together for a particular reason
   // -- all of the messages in this particular folder, all of the documents
@@ -751,7 +764,7 @@
   // Create a new **Collection**, perhaps to contain a specific type of `model`.
   // If a `comparator` is specified, the Collection will maintain
   // its models in sort order, as they're added and removed.
-  var Collection = Backbone.Collection = function(models, options) {
+  var Collection = Schmackbone.Collection = function(models, options) {
     options || (options = {});
     this.preinitialize.apply(this, arguments);
     if (options.model) this.model = options.model;
@@ -779,7 +792,7 @@
   // Define the Collection's inheritable methods.
   _.extend(Collection.prototype, Events, {
 
-    // The default model for a collection is just a **Backbone.Model**.
+    // The default model for a collection is just a **Schmackbone.Model**.
     // This should be overridden in most cases.
     model: Model,
 
@@ -798,12 +811,12 @@
       return this.map(function(model) { return model.toJSON(options); });
     },
 
-    // Proxy `Backbone.sync` by default.
+    // Proxy `Schmackbone.sync` by default.
     sync: function() {
-      return Backbone.sync.apply(this, arguments);
+      return Schmackbone.sync.apply(this, arguments);
     },
 
-    // Add a model, or list of models to the set. `models` may be Backbone
+    // Add a model, or list of models to the set. `models` may be Schmackbone
     // Models or raw JavaScript objects to be converted to Models, or any
     // combination of the two.
     add: function(models, options) {
@@ -1053,8 +1066,12 @@
       options.success = function(resp) {
         var method = options.reset ? 'reset' : 'set';
         collection[method](resp, options);
-        if (success) success.call(options.context, collection, resp, options);
         collection.trigger('sync', collection, resp, options);
+        if (success || options.complete) {
+          if (success) success.call(options.context, collection, resp, options);
+          if (options.complete) options.complete();
+        }
+        return [collection, resp, options];
       };
       wrapError(this, options);
       return this.sync('read', this, options);
@@ -1063,8 +1080,8 @@
     // Create a new instance of a model in this collection. Add the model to the
     // collection immediately, unless `wait: true` is passed, in which case we
     // wait for the server to agree.
-    create: function(model, options) {
-      options = options ? _.clone(options) : {};
+    create: function(model, options = {}) {
+      options = _.extend({}, options);
       var wait = options.wait;
       model = this._prepareModel(model, options);
       if (!model) return false;
@@ -1075,8 +1092,7 @@
         if (wait) collection.add(m, callbackOpts);
         if (success) success.call(callbackOpts.context, m, resp, callbackOpts);
       };
-      model.save(null, options);
-      return model;
+      return model.save(null, options);
     },
 
     // **parse** converts a response into a list of models to be added to the
@@ -1211,7 +1227,6 @@
 
   // Defining an @@iterator method implements JavaScript's Iterable protocol.
   // In modern ES2015 browsers, this value is found at Symbol.iterator.
-  /* global Symbol */
   var $$iterator = typeof Symbol === 'function' && Symbol.iterator;
   if ($$iterator) {
     Collection.prototype[$$iterator] = Collection.prototype.values;
@@ -1222,7 +1237,7 @@
 
   // A CollectionIterator implements JavaScript's Iterator protocol, allowing the
   // use of `for of` loops in modern browsers and interoperation between
-  // Backbone.Collection and other JavaScript functions and third-party libraries
+  // Schmackbone.Collection and other JavaScript functions and third-party libraries
   // which can operate on Iterables.
   var CollectionIterator = function(collection, kind) {
     this._collection = collection;
@@ -1275,7 +1290,7 @@
     return {value: void 0, done: true};
   };
 
-  // Proxy Backbone class methods to Underscore functions, wrapping the model's
+  // Proxy Schmackbone class methods to Underscore functions, wrapping the model's
   // `attributes` object or collection's `models` array behind the scenes.
   //
   // collection.filter(function(model) { return model.get('age') > 10 });
@@ -1325,7 +1340,7 @@
   };
 
   // Underscore methods that we want to implement on the Collection.
-  // 90% of the core usefulness of Backbone Collections is actually implemented
+  // 90% of the core usefulness of Schmackbone Collections is actually implemented
   // right here:
   var collectionMethods = {forEach: 3, each: 3, map: 3, collect: 3, reduce: 0,
     foldl: 0, inject: 0, reduceRight: 0, foldr: 0, find: 3, detect: 3, filter: 3,
@@ -1363,10 +1378,10 @@
     addUnderscoreMethods(Base, _, methods, attribute);
   });
 
-  // Backbone.sync
+  // Schmackbone.sync
   // -------------
 
-  // Override this function to change the manner in which Backbone persists
+  // Override this function to change the manner in which Schmackbone persists
   // models to the server. You will be passed the type of request, and the
   // model in question. By default, makes a RESTful Ajax request
   // to the model's `url()`. Some possible customizations could be:
@@ -1375,30 +1390,30 @@
   // * Send up the models as XML instead of JSON.
   // * Persist models via WebSockets instead of Ajax.
   //
-  // Turn on `Backbone.emulateHTTP` in order to send `PUT` and `DELETE` requests
+  // Turn on `Schmackbone.emulateHTTP` in order to send `PUT` and `DELETE` requests
   // as `POST`, with a `_method` parameter containing the true HTTP method,
   // as well as all requests with the body as `application/x-www-form-urlencoded`
   // instead of `application/json` with the model in a param named `model`.
   // Useful when interfacing with server-side languages like **PHP** that make
   // it difficult to read the body of `PUT` requests.
-  Backbone.sync = function(method, model, options) {
+  Schmackbone.sync = function(method, model, options) {
     var type = methodMap[method];
 
     // Default options, unless specified.
     _.defaults(options || (options = {}), {
-      emulateHTTP: Backbone.emulateHTTP,
-      emulateJSON: Backbone.emulateJSON
+      emulateHTTP: Schmackbone.emulateHTTP,
+      emulateJSON: Schmackbone.emulateJSON
     });
 
     // Default JSON-request options.
     var params = {type: type, dataType: 'json'};
 
-    // Backbone creates an `xhr` property on the options object for its default
+    // Schmackbone creates an `xhr` property on the options object for its default
     // xhr request made via jquery. Using window.fetch this becomes just a
     // reference to a Promise, and not very useful. So here we attach a response
     // object that we mutate directly with the request's response object. Note
     // that we the original options object passed to fetch/save/destroy calls (and
-    // kept in closure) is not the same one passed to Backbone.ajax. It's a copy,
+    // kept in closure) is not the same one passed to Schmackbone.ajax. It's a copy,
     // and so we must modify the response object directly for it to be passed through.
     options.response = {};
 
@@ -1442,12 +1457,12 @@
     };
 
     // Make the request, allowing the user to override any Ajax options.
-    var xhr = options.xhr = Backbone.ajax(_.extend(params, options));
+    var xhr = options.xhr = Schmackbone.ajax(_.extend(params, options));
     model.trigger('request', model, xhr, options);
     return xhr;
   };
 
-  // Map from CRUD to HTTP for our default `Backbone.sync` implementation.
+  // Map from CRUD to HTTP for our default `Schmackbone.sync` implementation.
   var methodMap = {
     create: 'POST',
     update: 'PUT',
@@ -1459,23 +1474,23 @@
   // override this to provide custom request options manipulation before a request
   // goes out, for example, to add auth headers to the `headers` property, or to
   // custom wrap the error callback in the `error` property
-  Backbone.ajaxPrefilter = _.identity;
+  Schmackbone.ajaxPrefilter = _.identity;
 
   const MIME_TYPE_JSON = 'application/json';
   const MIME_TYPE_DEFAULT = 'application/x-www-form-urlencoded; charset=UTF-8';
 
   /**
-   * This is our jquery-less override to Backbone's ajax functionality. It mirrors
+   * This is our jquery-less override to Schmackbone's ajax functionality. It mirrors
    * jquery's $.ajax in a few ways, for example, the `hasBodyContent` to
    * conditionally add Content-Type headers, and to default to
    * x-www-form-urlencoded data. It also has a `complete` callback that we can
    * eventually use in a Promise.finally when we don't need to polyfill that. Its
-   * success and error handlers have similar signatures (via Backbone) to their
+   * success and error handlers have similar signatures (via Schmackbone) to their
    * jquery counterparts. Of course, the main difference with jquery is that we're
    * using promises via the native `window.fetch`. This also auto-stringifies
    * application/json body data.
    */
-  Backbone.ajax = function(options) {
+  Schmackbone.ajax = function(options) {
     var hasData = !!_.size(options.data),
         hasBodyContent = !/^(?:GET|HEAD)$/.test(options.type) && hasData;
 
@@ -1483,7 +1498,7 @@
       options.url += (options.url.indexOf('?') > -1 ? '&' : '?') + stringify(options.data);
     }
 
-    options = Backbone.ajaxPrefilter(options);
+    options = Schmackbone.ajaxPrefilter(options);
 
     return window.fetch(options.url, _.extend(options, _.extend({
       method: options.type,
@@ -1491,9 +1506,9 @@
         {Accept: MIME_TYPE_JSON},
         // mock jquery behavior here as we migrate off of it:
         //  * only set contentType header if a write request and if there is body data
-        //  * default to x-www-form-urlencoded. Backbone will pass application/json
+        //  * default to x-www-form-urlencoded. Schmackbone will pass application/json
         //    and JSON-stringify options.data for save/destroy calls, but we'll do
-        //    it here for our own POST requests via fetch calls that Backbone doesn't cover
+        //    it here for our own POST requests via fetch calls that Schmackbone doesn't cover
         hasBodyContent ? {'Content-Type': options.contentType || MIME_TYPE_DEFAULT} : {},
         options.headers
       )
@@ -1507,7 +1522,7 @@
     } : {})
     )).then((res) => {
       // make a copy of the response object and place it into the options
-      // `response` property we created before Backbone.sync. This will make it
+      // `response` property we created before Schmackbone.sync. This will make it
       // available in our success callbacks. Note that our error callbacks will
       // have it, as well, but they will also get it directly from the rejected
       // promise. we use _.extend instead of Object.assign because none of the
@@ -1516,17 +1531,17 @@
 
       // catch block here handles the case where the response isn't valid json,
       // like for example a 204 no content
-      return res.json()['catch'](() => ({}))
+      return res.json().catch(() => ({}))
         .then((json) => res.ok ? json : Promise.reject(_.extend({}, res, {json})));
-    }).then(options.success, options.error).then(options.complete || _.noop);
+    }).then(options.success, options.error);
   };
 
-  // Backbone.Router
+  // Schmackbone.Router
   // ---------------
 
   // Routers map faux-URLs to actions, and fire events when routes are
   // matched. Creating a new one sets its `routes` hash, if not set statically.
-  var Router = Backbone.Router = function(options) {
+  var Router = Schmackbone.Router = function(options) {
     options || (options = {});
     this.preinitialize.apply(this, arguments);
     if (options.routes) this.routes = options.routes;
@@ -1541,7 +1556,7 @@
   var splatParam    = /\*\w+/g;
   var escapeRegExp  = /[\-{}\[\]+?.,\\\^$|#\s]/g;
 
-  // Set up all inheritable **Backbone.Router** properties and methods.
+  // Set up all inheritable **Schmackbone.Router** properties and methods.
   _.extend(Router.prototype, Events, {
 
     // preinitialize is an empty function by default. You can override it with a function
@@ -1566,12 +1581,12 @@
       }
       if (!callback) callback = this[name];
       var router = this;
-      Backbone.history.route(route, function(fragment) {
+      Schmackbone.history.route(route, function(fragment) {
         var args = router._extractParameters(route, fragment);
         if (router.execute(callback, args, name) !== false) {
           router.trigger.apply(router, ['route:' + name].concat(args));
           router.trigger('route', name, args);
-          Backbone.history.trigger('route', router, name, args);
+          Schmackbone.history.trigger('route', router, name, args);
         }
       });
       return this;
@@ -1583,13 +1598,13 @@
       if (callback) callback.apply(this, args);
     },
 
-    // Simple proxy to `Backbone.history` to save a fragment into the history.
+    // Simple proxy to `Schmackbone.history` to save a fragment into the history.
     navigate: function(fragment, options) {
-      Backbone.history.navigate(fragment, options);
+      Schmackbone.history.navigate(fragment, options);
       return this;
     },
 
-    // Bind all defined routes to `Backbone.history`. We have to reverse the
+    // Bind all defined routes to `Schmackbone.history`. We have to reverse the
     // order of the routes here to support behavior where the most general
     // routes can be defined at the bottom of the route map.
     _bindRoutes: function() {
@@ -1627,7 +1642,7 @@
 
   });
 
-  // Backbone.History
+  // Schmackbone.History
   // ----------------
 
   // Handles cross-browser history management, based on either
@@ -1635,7 +1650,7 @@
   // [onhashchange](https://developer.mozilla.org/en-US/docs/DOM/window.onhashchange)
   // and URL fragments. If the browser supports neither (old IE, natch),
   // falls back to polling.
-  var History = Backbone.History = function() {
+  var History = Schmackbone.History = function() {
     this.handlers = [];
     this.checkUrl = this.checkUrl.bind(this);
 
@@ -1658,7 +1673,7 @@
   // Has the history handling already been started?
   History.started = false;
 
-  // Set up all inheritable **Backbone.History** properties and methods.
+  // Set up all inheritable **Schmackbone.History** properties and methods.
   _.extend(History.prototype, Events, {
 
     // The default interval to poll for hash changes, if necessary, is
@@ -1722,7 +1737,7 @@
     // Start the hash change handling, returning `true` if the current URL matches
     // an existing route, and `false` otherwise.
     start: function(options) {
-      if (History.started) throw new Error('Backbone.history has already been started');
+      if (History.started) throw new Error('Schmackbone.history has already been started');
       History.started = true;
 
       // Figure out the initial configuration. Do we need an iframe?
@@ -1794,7 +1809,7 @@
       if (!this.options.silent) return this.loadUrl();
     },
 
-    // Disable Backbone.history, perhaps temporarily. Not useful in a real app,
+    // Disable Schmackbone.history, perhaps temporarily. Not useful in a real app,
     // but possibly useful for unit testing Routers.
     stop: function() {
       // Add a cross-platform `removeEventListener` shim for older browsers.
@@ -1931,8 +1946,8 @@
 
   });
 
-  // Create the default Backbone.history.
-  Backbone.history = new History;
+  // Create the default Schmackbone.history.
+  Schmackbone.history = new History;
 
   // Helpers
   // -------
@@ -1980,10 +1995,14 @@
   var wrapError = function(model, options) {
     var error = options.error;
     options.error = function(resp) {
-      if (error) error.call(options.context, model, resp, options);
       model.trigger('error', model, resp, options);
+      if (error || options.complete) {
+        if (error) error.call(options.context, model, resp, options);
+        if (options.complete) options.complete();
+      }
+      return Promise.reject([model, resp, options]);
     };
   };
 
-  return Backbone;
+  return Schmackbone;
 });

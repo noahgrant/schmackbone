@@ -4,7 +4,7 @@
   },
   "globals": {
     "QUnit": false,
-    "Backbone": true,
+    "Schmackbone": true,
     "_": true,
     "sinon": true
   },
