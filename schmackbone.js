@@ -1451,11 +1451,6 @@
       params.processData = false;
     }
 
-    var error = options.error;
-    options.error = function(xhr) {
-      if (error) error.call(options.context, xhr);
-    };
-
     // Make the request, allowing the user to override any Ajax options.
     var xhr = options.xhr = Schmackbone.ajax(_.extend(params, options));
     model.trigger('request', model, xhr, options);
