@@ -70,10 +70,12 @@ passed to `Schmackbone.ajax` before any requests are made. Use this hook to pass
 global error handler:
 
 ```js
+import {setAjaxPrefilter} from 'schmackbone';
+
 // usage:
 // @param {object} options object
 // @return {object} modified options object
-Schmackbone.ajaxPrefilter = (options={}) => ({
+const ajaxPrefilter = (options={}) => ({
   ...options,
   // if you want to default all api requests to json
   contentType: 'application/json',
@@ -91,6 +93,8 @@ Schmackbone.ajaxPrefilter = (options={}) => ({
     Authorization: `Bearer ${localStorage.getItem('super-secret-auth-token')}`
   }
 });
+
+setAjaxPrefilter(ajaxPrefilter);
 ```
 
 By default, `Schmackbone.ajaxPrefilter` is set to the identity function.

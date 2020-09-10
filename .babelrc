@@ -8,11 +8,11 @@
         "safari": "13.1"
       },
       "modules": "cjs"
-    }],
-    "@babel/react"
+    }]
   ],
   "plugins": [
     "@babel/plugin-transform-runtime",
+    "@babel/plugin-proposal-class-properties"
   ],
   "ignore": ["**/node_modules/**"]
 }

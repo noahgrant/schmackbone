@@ -1,213 +1,214 @@
-((QUnit, sinon) => {
-  const TestModel = Schmackbone.Model.extend({url: () => '/test_path'});
-  const originalAjax = Schmackbone.ajax.bind(Schmackbone);
-  var waitsFor;
+import * as Config from '../lib/config.js';
+import * as Sync from '../lib/sync.js';
 
-  QUnit.module('Schmackbone.ajax', (hooks) => {
-    hooks.beforeEach(() => {
-      ({waitsFor} = QUnit.config.current.testEnvironment);
-      // overrides test-suite-wide ajax stub, because here we stub window.fetch
-      Schmackbone.ajax = originalAjax;
-      sinon.stub(window, 'fetch').callsFake(() => Promise.resolve(
-        new Response(new Blob([{test: 'response!'}], {type: 'application/json'}), {status: 200})
-      ));
+import {extend} from 'underscore';
+import Model from '../lib/model.js';
+
+class TestModel extends Model {
+  url = () => '/test_path'
+}
+
+const originalAjax = Sync.ajax;
+let waitsFor;
+
+QUnit.module('ajax', (hooks) => {
+  hooks.beforeEach(() => {
+    ({waitsFor} = QUnit.config.current.testEnvironment);
+    // overrides test-suite-wide ajax stub, because here we stub window.fetch
+    Sync.ajax = originalAjax;
+    sinon.stub(window, 'fetch').callsFake(() => Promise.resolve(
+      new Response(new Blob([{test: 'response!'}], {type: 'application/json'}), {status: 200})
+    ));
+  });
+
+  hooks.afterEach((assert) => {
+    var done = assert.async();
+
+    // wait a frame to ensure all mocked promises run to completion
+    window.requestAnimationFrame(() => {
+      sinon.restore();
+      done();
     });
+  });
 
-    hooks.afterEach((assert) => {
-      var done = assert.async();
+  QUnit.test('adds a \'response\' property in the sync method', (assert) => {
+    var options = {};
 
-      // wait a frame to ensure all mocked promises run to completion
-      window.requestAnimationFrame(() => {
-        sinon.restore();
-        done();
+    sinon.spy(Sync, 'ajax');
+    Sync.default('fetch', new TestModel(), options);
+    assert.deepEqual(options.response, {});
+  });
+
+  QUnit.test('appends query params to the url if there are any and if a GET', (assert) => {
+    new TestModel().fetch({data: {zorah: 'thefung', noah: 'thegrant'}});
+
+    assert.equal(
+      window.fetch.lastCall.args[0],
+      '/test_path?zorah=thefung&noah=thegrant'
+    );
+  });
+
+  QUnit.test('can pass custom headers', (assert) => {
+    new TestModel().fetch({headers: {'Coffee Region': 'Ethiopia'}});
+
+    assert.deepEqual(window.fetch.lastCall.args[1].headers, {
+      Accept: 'application/json',
+      'Coffee Region': 'Ethiopia'
+    });
+  });
+
+  QUnit.module('has a ajaxPrefilter function to alter options', () => {
+    QUnit.test('that defaults to the identity function', (assert) => {
+      var options = {headers: {'Test Header': 'sometestheadervalue'}};
+
+      sinon.spy(Sync, 'ajax');
+
+      new TestModel().fetch(options);
+
+      assert.equal(options, Sync.ajax.lastCall.args[0]);
+
+      assert.deepEqual(window.fetch.lastCall.args[1].headers, {
+        Accept: 'application/json',
+        'Test Header': 'sometestheadervalue'
       });
     });
 
-    QUnit.test('adds a \'response\' property in the sync method', (assert) => {
-      var options = {};
+    QUnit.test('that provides a hook for custom options meddling', (assert) => {
+      var errorSpy = sinon.spy();
 
-      sinon.spy(Schmackbone, 'ajax');
-      Schmackbone.sync('fetch', new TestModel(), options);
-      assert.deepEqual(options.response, {});
-    });
+      Config.setAjaxPrefilter(sinon.fake((options) => extend({}, options, {
+        error: errorSpy,
+        headers: extend({}, options.headers, {Authorization: 'Bearer SECRET'})
+      })));
+      sinon.spy(Sync, 'ajax');
+      sinon.spy(Sync, 'default');
 
-    QUnit.test('appends query params to the url if there are any and if a GET', (assert) => {
-      new TestModel().fetch({
-        data: {
-          zorah: 'thefung',
-          noah: 'thegrant'
-        }
-      });
+      new TestModel().fetch();
+
+      assert.notOk(Sync.ajax.lastCall.args[0].headers);
+      assert.notOk(Sync.default.lastCall.args[0].error);
+      assert.ok(window.fetch.lastCall.args[1].headers.Authorization);
+      assert.equal(window.fetch.lastCall.args[1].error, errorSpy);
 
       assert.equal(
-        window.fetch.lastCall.args[0],
-        '/test_path?zorah=thefung&noah=thegrant'
+        Config.getAjaxPrefilter().lastCall.args[0],
+        Sync.ajax.lastCall.args[0]
+      );
+    });
+  });
+
+  QUnit.module('passes \'Content-Type\' headers', () => {
+    QUnit.test('if a body is passed for an http type that accepts a body', (assert) => {
+      new TestModel().fetch({data: {zoah: 'thefungrant'}});
+      // no body, because this is a GET
+      assert.notOk(window.fetch.lastCall.args[1].headers['Content-Type']);
+
+      new TestModel().save({zoah: 'thefungrant'});
+      // as a save or destroy call, backbone should add app json to the body
+      assert.equal(window.fetch.lastCall.args[1].headers['Content-Type'], 'application/json');
+
+      new TestModel({zoah: 'thefungrant'}).destroy();
+      assert.equal(window.fetch.lastCall.args[1].headers['Content-Type'], 'application/json');
+    });
+
+    QUnit.test('that defaults to www-form-urlencoded', (assert) => {
+      // a manual fetch with a POST will use the defaults
+      new TestModel().fetch({type: 'POST', data: {zoah: 'thefungrant'}});
+      assert.equal(
+        window.fetch.lastCall.args[1].headers['Content-Type'],
+        'application/x-www-form-urlencoded; charset=UTF-8'
+      );
+
+      // can pass custom content type
+      new TestModel().save({zoah: 'thefungrant'}, {contentType: 'application/text'});
+      assert.equal(
+        window.fetch.lastCall.args[1].headers['Content-Type'],
+        'application/text'
+      );
+    });
+  });
+
+  QUnit.module('stringifies body data', () => {
+    QUnit.test('if it exists, is for an http type that accepts a body, and is ' +
+       'not already a string', (assert) => {
+      new TestModel().fetch({data: {zorah: 'thefung', noah: 'thegrant'}});
+      // no body, because this is a GET
+      assert.notOk(!!window.fetch.lastCall.args[1].body);
+
+      new TestModel().fetch({type: 'HEAD', data: {zorah: 'thefung', noah: 'thegrant'}});
+      // no body, because this is a HEAD
+      assert.notOk(!!window.fetch.lastCall.args[1].body);
+
+      new TestModel().fetch({type: 'POST'});
+      // no body, so no body sent
+      assert.notOk(!!window.fetch.lastCall.args[1].body);
+
+      sinon.spy(Sync, 'ajax');
+
+      new TestModel().save({zorah: 'thefung', noah: 'thegrant'});
+      // body should get JSON-stringified by backbone
+      assert.equal(
+        Sync.ajax.lastCall.args[0].data,
+        '{"zorah":"thefung","noah":"thegrant"}'
+      );
+      // and then it just gets passed directly
+      assert.equal(
+        window.fetch.lastCall.args[1].body,
+        '{"zorah":"thefung","noah":"thegrant"}'
       );
     });
 
-    QUnit.test('can pass custom headers', (assert) => {
-      new TestModel().fetch({headers: {'Coffee Region': 'Ethiopia'}});
+    QUnit.test('query-param stringifies by default, or JSON-stringifies for JSON mime type data',
+      (assert) => {
+        new TestModel().fetch({type: 'POST', data: {zorah: 'thefung', noah: 'thegrant'}});
+        assert.equal(window.fetch.lastCall.args[1].body, 'zorah=thefung&noah=thegrant');
 
-      assert.deepEqual(window.fetch.lastCall.args[1].headers, {
-        'Accept': 'application/json',
-        'Coffee Region': 'Ethiopia'
-      });
-    });
-
-    QUnit.module('has a ajaxPrefilter function to alter options', () => {
-      QUnit.test('that defaults to the identity function', (assert) => {
-        var options = {headers: {'Test Header': 'sometestheadervalue'}};
-
-        sinon.spy(Schmackbone, 'ajaxPrefilter');
-        sinon.spy(Schmackbone, 'ajax');
-
-        new TestModel().fetch(options);
-
-        assert.equal(
-          Schmackbone.ajaxPrefilter.lastCall.args[0],
-          Schmackbone.ajax.lastCall.args[0]
-        );
-
-        assert.deepEqual(window.fetch.lastCall.args[1].headers, {
-          'Accept': 'application/json',
-          'Test Header': 'sometestheadervalue'
+        new TestModel().fetch({
+          type: 'POST',
+          contentType: 'application/json',
+          data: {zorah: 'thefung', noah: 'thegrant'}
         });
-      });
 
-      QUnit.test('that provides a hook for custom options meddling', (assert) => {
-        var errorSpy = sinon.spy();
-
-        sinon.stub(Schmackbone, 'ajaxPrefilter').callsFake((options) => _.extend({}, options, {
-          error: errorSpy,
-          headers: _.extend({}, options.headers, {Authorization: 'Bearer SECRET'})
-        }));
-        sinon.spy(Schmackbone, 'ajax');
-        sinon.spy(Schmackbone, 'sync');
-
-        new TestModel().fetch();
-
-        assert.notOk(Schmackbone.ajax.lastCall.args[0].headers);
-        assert.notOk(Schmackbone.sync.lastCall.args[0].error);
-        assert.ok(window.fetch.lastCall.args[1].headers.Authorization);
-        assert.equal(window.fetch.lastCall.args[1].error, errorSpy);
-
-        assert.equal(
-          Schmackbone.ajaxPrefilter.lastCall.args[0],
-          Schmackbone.ajax.lastCall.args[0]
-        );
-      });
-    });
-
-    QUnit.module('passes \'Content-Type\' headers', () => {
-      QUnit.test('if a body is passed for an http type that accepts a body', (assert) => {
-        new TestModel().fetch({data: {zoah: 'thefungrant'}});
-        // no body, because this is a GET
-        assert.notOk(window.fetch.lastCall.args[1].headers['Content-Type']);
-
-        new TestModel().save({zoah: 'thefungrant'});
-        // as a save or destroy call, backbone should add app json to the body
-        assert.equal(window.fetch.lastCall.args[1].headers['Content-Type'], 'application/json');
-
-        new TestModel({zoah: 'thefungrant'}).destroy();
-        assert.equal(window.fetch.lastCall.args[1].headers['Content-Type'], 'application/json');
-      });
-
-      QUnit.test('that defaults to www-form-urlencoded', (assert) => {
-        // a manual fetch with a POST will use the defaults
-        new TestModel().fetch({type: 'POST', data: {zoah: 'thefungrant'}});
-        assert.equal(
-          window.fetch.lastCall.args[1].headers['Content-Type'],
-          'application/x-www-form-urlencoded; charset=UTF-8'
-        );
-
-        // can pass custom content type
-        new TestModel().save({zoah: 'thefungrant'}, {contentType: 'application/text'});
-        assert.equal(
-          window.fetch.lastCall.args[1].headers['Content-Type'],
-          'application/text'
-        );
-      });
-    });
-
-    QUnit.module('stringifies body data', () => {
-      QUnit.test('if it exists, is for an http type that accepts a body, and is not already a string', (assert) => {
-        new TestModel().fetch({data: {zorah: 'thefung', noah: 'thegrant'}});
-        // no body, because this is a GET
-        assert.notOk(!!window.fetch.lastCall.args[1].body);
-
-        new TestModel().fetch({type: 'HEAD', data: {zorah: 'thefung', noah: 'thegrant'}});
-        // no body, because this is a HEAD
-        assert.notOk(!!window.fetch.lastCall.args[1].body);
-
-        new TestModel().fetch({type: 'POST'});
-        // no body, so no body sent
-        assert.notOk(!!window.fetch.lastCall.args[1].body);
-
-        sinon.spy(Schmackbone, 'ajax');
-
-        new TestModel().save({zorah: 'thefung', noah: 'thegrant'});
-        // body should get JSON-stringified by backbone
-        assert.equal(
-          Schmackbone.ajax.lastCall.args[0].data,
-          '{"zorah":"thefung","noah":"thegrant"}'
-        );
-        // and then it just gets passed directly
         assert.equal(
           window.fetch.lastCall.args[1].body,
           '{"zorah":"thefung","noah":"thegrant"}'
         );
       });
+  });
 
-      QUnit.test('query-param stringifies by default, or JSON-stringifies for JSON mime type data',
-        (assert) => {
-          new TestModel().fetch({type: 'POST', data: {zorah: 'thefung', noah: 'thegrant'}});
-          assert.equal(window.fetch.lastCall.args[1].body, 'zorah=thefung&noah=thegrant');
+  QUnit.test('copies the response properties to the added options.response', async(assert) => {
+    var options = {},
+        done = assert.async();
 
-          new TestModel().fetch({
-            type: 'POST',
-            contentType: 'application/json',
-            data: {zorah: 'thefung', noah: 'thegrant'}
-          });
+    Sync.default('fetch', new TestModel(), options);
+    await waitsFor(() => 'status' in options.response);
 
-          assert.equal(
-            window.fetch.lastCall.args[1].body,
-            '{"zorah":"thefung","noah":"thegrant"}'
-          );
-        });
-    });
+    assert.equal(options.response.status, 200);
+    assert.ok(options.response.ok);
+    assert.ok(!!options.response.json);
 
-    QUnit.test('copies the response properties to the added options.response', async (assert) => {
-      var options = {},
-          done = assert.async();
+    done();
+  });
 
-      Schmackbone.sync('fetch', new TestModel(), options);
-      await waitsFor(() => 'status' in options.response);
+  QUnit.test('does not throw an error for malformed json', async(assert) => {
+    var successSpy = sinon.spy(),
+        done = assert.async();
 
-      assert.equal(options.response.status, 200);
-      assert.ok(options.response.ok);
-      assert.ok(!!options.response.json);
+    // ie 204 content, we catch and pass an empty object
+    window.fetch.callsFake(() => Promise.resolve(
+      new Response('', {type: 'application/json'}),
+      {status: 204}
+    ));
 
-      done();
-    });
+    new TestModel().fetch({success: successSpy});
+    await waitsFor(() => successSpy.callCount);
 
-    QUnit.test('does not throw an error for malformed json', async (assert) => {
-      var successSpy = sinon.spy(),
-          done = assert.async();
+    assert.propEqual(successSpy.lastCall.args[1], {});
+    done();
+  });
 
-      // ie 204 content, we catch and pass an empty object
-      window.fetch.callsFake(() => Promise.resolve(
-        new Response('', {type: 'application/json'}),
-        {status: 204}
-      ));
-
-      new TestModel().fetch({success: successSpy});
-      await waitsFor(() => successSpy.callCount);
-
-      assert.propEqual(successSpy.lastCall.args[1], {});
-      done();
-    });
-
-    QUnit.test('calls success and error callbacks as appropriate, with the correct params', async (assert) => {
+  QUnit.test('calls success and error callbacks as appropriate, with the correct params',
+    async(assert) => {
       var successSpy = sinon.spy(),
           errorSpy = sinon.spy(),
           model = new TestModel(),
@@ -238,29 +239,28 @@
       done();
     });
 
-    QUnit.test('calls a \'complete\' callback regardless of request outcome', async (assert) => {
-      var completeSpy = sinon.spy(),
-          errorResponse = new Response(
-            new Blob([{test: 'response!'}], {type: 'application/json'}),
-            {status: 400}
-          ),
-          done = assert.async();
+  QUnit.test('calls a \'complete\' callback regardless of request outcome', async(assert) => {
+    var completeSpy = sinon.spy(),
+        errorResponse = new Response(
+          new Blob([{test: 'response!'}], {type: 'application/json'}),
+          {status: 400}
+        ),
+        done = assert.async();
 
-      // first for success calls
-      new TestModel().fetch({complete: completeSpy});
-      await waitsFor(() => completeSpy.callCount);
+    // first for success calls
+    new TestModel().fetch({complete: completeSpy});
+    await waitsFor(() => completeSpy.callCount);
 
-      assert.equal(completeSpy.callCount, 1);
+    assert.equal(completeSpy.callCount, 1);
 
-      // now test error
-      completeSpy = sinon.spy();
-      window.fetch.callsFake(() => Promise.resolve(errorResponse));
+    // now test error
+    completeSpy = sinon.spy();
+    window.fetch.callsFake(() => Promise.resolve(errorResponse));
 
-      new TestModel().fetch({complete: completeSpy});
-      await waitsFor(() => completeSpy.callCount);
+    new TestModel().fetch({complete: completeSpy});
+    await waitsFor(() => completeSpy.callCount);
 
-      assert.equal(completeSpy.callCount, 1);
-      done();
-    });
+    assert.equal(completeSpy.callCount, 1);
+    done();
   });
-})(QUnit, sinon);
+});

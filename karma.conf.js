@@ -8,13 +8,12 @@ module.exports = (config) => {
       'node_modules/qs/dist/qs.js',
       'test/vendor/json2.js',
       'test/vendor/underscore.js',
-      'schmackbone.js',
       'test/setup/*.js',
-      'test/*.js'
+      'test/ajax.js'
     ],
 
     // test results reporter to use
-    reporters: ['progress', 'kjhtml'],
+    reporters: ['progress'],
 
     // web server port
     port: 9877,
@@ -23,7 +22,6 @@ module.exports = (config) => {
     colors: true,
 
     // level of logging
-    // possible values: config.LOG_DISABLE || config.LOG_ERROR || config.LOG_WARN || config.LOG_INFO || config.LOG_DEBUG
     logLevel: config.LOG_INFO,
 
     // enable / disable watching file and executing tests whenever any file changes
@@ -40,10 +38,11 @@ module.exports = (config) => {
         flags: ['--no-sandbox']
       }
     },
-    plugins: ['karma-webpack'],
     preprocessors: {
-      'lib/*.js*': ['webpack'],
-      'test/*.js*': ['webpack']
+      'schmackbone.js': ['webpack'],
+      'lib/*.js': ['webpack'],
+      'test/setup/*.js': ['webpack'],
+      'test/ajax.js': ['webpack']
     },
     webpack: {
       mode: 'development',
