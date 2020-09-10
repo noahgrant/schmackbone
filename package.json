@@ -13,7 +13,7 @@
   "dependencies": {
     "qs": "^6.5.2",
     "terser": "^4.6.12",
-    "underscore": ">=1.8.3"
+    "underscore": "^1.11.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.11.6",
