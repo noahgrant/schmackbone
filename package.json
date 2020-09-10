@@ -4,7 +4,6 @@
   "url": "http://backbonejs.org",
   "keywords": [
     "model",
-    "view",
     "controller",
     "router",
     "server",
@@ -17,24 +16,34 @@
     "underscore": ">=1.8.3"
   },
   "devDependencies": {
+    "@babel/cli": "^7.11.6",
+    "@babel/core": "^7.11.6",
+    "@babel/plugin-transform-runtime": "^7.11.5",
+    "@babel/preset-env": "^7.11.5",
+    "babel-eslint": "^10.1.0",
+    "babel-loader": "^8.1.0",
     "coffee-script": "1.7.1",
     "docco": "0.7.0",
-    "eslint": "^6.8.0",
+    "eslint": "^7.8.1",
+    "eslint-plugin-sift": "^0.3.0",
     "karma": "^0.13.13",
     "karma-chrome-launcher": "^2.2.0",
     "karma-qunit": "^1.0.0",
     "karma-sinon": "^1.0.5",
+    "karma-webpack": "^4.0.2",
     "qunitjs": "^2.0.0",
-    "sinon": "^7.3.1"
+    "sinon": "^7.3.1",
+    "webpack": "^4.44.1"
   },
   "scripts": {
     "test": "karma start && coffee test/model.coffee && npm run lint",
     "build": "terser schmackbone.js --mangle --source-map \"filename=schmackbone-min.map\" -o schmackbone-min.js",
     "doc": "docco schmackbone.js && docco examples/todos/todos.js examples/backbone.localStorage.js",
+    "prepublishOnly": "babel lib -d ./",
     "lint": "eslint schmackbone.js test/*.js"
   },
   "main": "schmackbone.js",
-  "version": "1.5.1",
+  "version": "2.0.0",
   "license": "MIT",
   "repository": {
     "type": "git",

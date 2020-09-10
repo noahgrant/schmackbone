@@ -1,8 +1,4 @@
-// Note some browser launchers should be installed before using karma start.
-// For example:
-// npm install karma-firefox-launcher
-// karma start --browsers=Firefox
-module.exports = function(config) {
+module.exports = (config) => {
   config.set({
     basePath: '',
     frameworks: ['qunit', 'sinon'],
@@ -18,9 +14,7 @@ module.exports = function(config) {
     ],
 
     // test results reporter to use
-    // possible values: 'dots', 'progress'
-    // available reporters: https://npmjs.org/browse/keyword/karma-reporter
-    reporters: ['progress'],
+    reporters: ['progress', 'kjhtml'],
 
     // web server port
     port: 9877,
@@ -44,6 +38,21 @@ module.exports = function(config) {
       ChromeCustom: {
         base: 'ChromeHeadless',
         flags: ['--no-sandbox']
+      }
+    },
+    plugins: ['karma-webpack'],
+    preprocessors: {
+      'lib/*.js*': ['webpack'],
+      'test/*.js*': ['webpack']
+    },
+    webpack: {
+      mode: 'development',
+      module: {
+        rules: [{
+          test: /\.jsx?$/,
+          exclude: /node_modules/,
+          use: {loader: 'babel-loader?cacheDirectory=true'}
+        }]
       }
     }
   });

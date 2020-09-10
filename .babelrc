@@ -1,0 +1,18 @@
+{
+  "presets": [
+    ["@babel/env", {
+      "targets": {
+        "chrome": "80",
+        "firefox": "79",
+        "edge": "84",
+        "safari": "13.1"
+      },
+      "modules": "cjs"
+    }],
+    "@babel/react"
+  ],
+  "plugins": [
+    "@babel/plugin-transform-runtime",
+  ],
+  "ignore": ["**/node_modules/**"]
+}
