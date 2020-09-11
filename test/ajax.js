@@ -1,102 +1,85 @@
 import * as Config from '../lib/config.js';
 import * as Sync from '../lib/sync.js';
 
-import {extend} from 'underscore';
 import Model from '../lib/model.js';
+import {waitsFor} from './test-utils.js';
 
 class TestModel extends Model {
   url = () => '/test_path'
 }
 
 const originalAjax = Sync.ajax;
-let waitsFor;
 
-QUnit.module('ajax', (hooks) => {
-  hooks.beforeEach(() => {
-    ({waitsFor} = QUnit.config.current.testEnvironment);
+describe('ajax', () => {
+  beforeEach(() => {
     // overrides test-suite-wide ajax stub, because here we stub window.fetch
     Sync.ajax = originalAjax;
-    sinon.stub(window, 'fetch').callsFake(() => Promise.resolve(
+    spyOn(window, 'fetch').and.callFake(() => Promise.resolve(
       new Response(new Blob([{test: 'response!'}], {type: 'application/json'}), {status: 200})
     ));
   });
 
-  hooks.afterEach((assert) => {
-    var done = assert.async();
-
+  afterEach(async(done) => {
     // wait a frame to ensure all mocked promises run to completion
-    window.requestAnimationFrame(() => {
-      sinon.restore();
-      done();
-    });
+    window.requestAnimationFrame(done);
   });
 
-  QUnit.test('adds a \'response\' property in the sync method', (assert) => {
+  it('adds a \'response\' property in the sync method', () => {
     var options = {};
 
-    sinon.spy(Sync, 'ajax');
+    spyOn(Sync, 'ajax');
     Sync.default('fetch', new TestModel(), options);
-    assert.deepEqual(options.response, {});
+    expect(options.response).toEqual({});
   });
 
-  QUnit.test('appends query params to the url if there are any and if a GET', (assert) => {
+  it('appends query params to the url if there are any and if a GET', () => {
     new TestModel().fetch({data: {zorah: 'thefung', noah: 'thegrant'}});
 
-    assert.equal(
-      window.fetch.lastCall.args[0],
-      '/test_path?zorah=thefung&noah=thegrant'
-    );
+    expect(window.fetch.lastCall.args[0]).toEqual('/test_path?zorah=thefung&noah=thegrant');
   });
 
-  QUnit.test('can pass custom headers', (assert) => {
+  it('can pass custom headers', () => {
     new TestModel().fetch({headers: {'Coffee Region': 'Ethiopia'}});
 
-    assert.deepEqual(window.fetch.lastCall.args[1].headers, {
+    expect(window.fetch.lastCall.args[1].headers).toEqual({
       Accept: 'application/json',
       'Coffee Region': 'Ethiopia'
     });
   });
 
-  QUnit.module('has a ajaxPrefilter function to alter options', () => {
-    QUnit.test('that defaults to the identity function', (assert) => {
+  describe('has a ajaxPrefilter function to alter options', () => {
+    it('that defaults to the identity function', () => {
       var options = {headers: {'Test Header': 'sometestheadervalue'}};
-
-      sinon.spy(Sync, 'ajax');
 
       new TestModel().fetch(options);
 
-      assert.equal(options, Sync.ajax.lastCall.args[0]);
+      expect(options).toEqual(Config.getAjaxPrefilter()(options));
 
-      assert.deepEqual(window.fetch.lastCall.args[1].headers, {
+      expect(window.fetch.lastCall.args[1].headers).toEqual({
         Accept: 'application/json',
         'Test Header': 'sometestheadervalue'
       });
     });
 
-    QUnit.test('that provides a hook for custom options meddling', (assert) => {
-      var errorSpy = sinon.spy();
+    it('that provides a hook for custom options meddling', () => {
+      var errorSpy = jasmine.createSpy('error');
 
-      Config.setAjaxPrefilter(sinon.fake((options) => extend({}, options, {
+      Config.setAjaxPrefilter(jasmine.createSpy('prefilter').and.callFake((options) => ({
+        ...options,
         error: errorSpy,
-        headers: extend({}, options.headers, {Authorization: 'Bearer SECRET'})
+        headers: {...options.headers, Authorization: 'Bearer SECRET'}
       })));
-      sinon.spy(Sync, 'ajax');
-      sinon.spy(Sync, 'default');
+      spyOn(Sync, 'default');
 
       new TestModel().fetch();
 
-      assert.notOk(Sync.ajax.lastCall.args[0].headers);
-      assert.notOk(Sync.default.lastCall.args[0].error);
-      assert.ok(window.fetch.lastCall.args[1].headers.Authorization);
-      assert.equal(window.fetch.lastCall.args[1].error, errorSpy);
-
-      assert.equal(
-        Config.getAjaxPrefilter().lastCall.args[0],
-        Sync.ajax.lastCall.args[0]
-      );
+      expect(Sync.default.lastCall.args[0].error).not.toBeDefined();
+      expect(window.fetch.lastCall.args[1].headers.Authorization).toBeDefined();
+      expect(window.fetch.lastCall.args[1].error).toEqual(errorSpy);
     });
   });
 
+  /*
   QUnit.module('passes \'Content-Type\' headers', () => {
     QUnit.test('if a body is passed for an http type that accepts a body', (assert) => {
       new TestModel().fetch({data: {zoah: 'thefungrant'}});
@@ -263,4 +246,5 @@ QUnit.module('ajax', (hooks) => {
     assert.equal(completeSpy.callCount, 1);
     done();
   });
+  */
 });

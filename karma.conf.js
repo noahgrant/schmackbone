@@ -1,13 +1,10 @@
 module.exports = (config) => {
   config.set({
     basePath: '',
-    frameworks: ['qunit', 'sinon'],
+    frameworks: ['jasmine'],
 
     // list of files / patterns to load in the browser
     files: [
-      'node_modules/qs/dist/qs.js',
-      'test/vendor/json2.js',
-      'test/vendor/underscore.js',
       'test/setup/*.js',
       'test/ajax.js'
     ],
@@ -29,9 +26,15 @@ module.exports = (config) => {
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
-    singleRun: true,
+    // singleRun: true,
 
-    browsers: ['ChromeCustom'],
+    browsers: ['Chrome'],
+    plugins: [
+      'karma-chrome-launcher',
+      'karma-jasmine',
+      'karma-jasmine-html-reporter',
+      'karma-webpack'
+    ],
     customLaunchers: {
       ChromeCustom: {
         base: 'ChromeHeadless',

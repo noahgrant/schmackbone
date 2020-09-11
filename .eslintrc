@@ -6,6 +6,7 @@
   "env": {
     "browser": true,
     "commonjs": true,
+    "jasmine": true,
     "es6": true,
     "node": true
   },
