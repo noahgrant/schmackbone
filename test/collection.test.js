@@ -1,106 +1,116 @@
-(function(QUnit) {
+import Collection from '../lib/collection';
+import Model from '../lib/model';
 
-  var a, b, c, d, e, col, otherCol;
+describe('Schmackbone.Collection', () => {
+  /* eslint-disable id-length */
+  var a,
+      b,
+      c,
+      d,
+      e,
+      col,
+      otherCol;
 
-  QUnit.module('Schmackbone.Collection', {
+  beforeEach(() => {
+    a = new Model({id: 3, label: 'a'});
+    b = new Model({id: 2, label: 'b'});
+    c = new Model({id: 1, label: 'c'});
+    d = new Model({id: 0, label: 'd'});
+    e = null;
+    col = new Collection([a, b, c, d]);
+    otherCol = new Collection();
+  });
 
-    beforeEach: function(assert) {
-      a         = new Schmackbone.Model({id: 3, label: 'a'});
-      b         = new Schmackbone.Model({id: 2, label: 'b'});
-      c         = new Schmackbone.Model({id: 1, label: 'c'});
-      d         = new Schmackbone.Model({id: 0, label: 'd'});
-      e         = null;
-      col       = new Schmackbone.Collection([a, b, c, d]);
-      otherCol  = new Schmackbone.Collection();
+  test('new and sort', () => {
+    var counter = 0;
+
+    col.on('sort', () => counter++);
+    expect(col.pluck('label')).toEqual(['a', 'b', 'c', 'd']);
+
+    col.comparator = (m1, m2) => m1.id > m2.id ? -1 : 1;
+    col.sort();
+
+    expect(counter).toEqual(1);
+    expect(col.pluck('label')).toEqual(['a', 'b', 'c', 'd']);
+
+    col.comparator = (model) => model.id;
+    col.sort();
+
+    expect(counter).toEqual(2);
+    expect(col.pluck('label')).toEqual(['d', 'c', 'b', 'a']);
+  });
+
+  test('String comparator', () => {
+    var collection = new Collection([{id: 3}, {id: 1}, {id: 2}], {comparator: 'id'});
+
+    expect(collection.pluck('id')).toEqual([1, 2, 3]);
+  });
+
+  test('new and parse', () => {
+    var models,
+        collection;
+
+    class _Collection extends Collection {
+      parse(data) {
+        return data.filter((datum) => datum.a % 2 === 0);
+      }
     }
 
+    models = [{a: 1}, {a: 2}, {a: 3}, {a: 4}];
+    collection = new _Collection(models, {parse: true});
+
+    expect(collection.length).toEqual(2);
+    expect(collection.at(0).get('a')).toEqual(2);
+    expect(collection.at(1).get('a')).toEqual(4);
   });
 
-  QUnit.test('new and sort', function(assert) {
-    assert.expect(6);
-    var counter = 0;
-    col.on('sort', function(){ counter++; });
-    assert.deepEqual(col.pluck('label'), ['a', 'b', 'c', 'd']);
-    col.comparator = function(m1, m2) {
-      return m1.id > m2.id ? -1 : 1;
-    };
-    col.sort();
-    assert.equal(counter, 1);
-    assert.deepEqual(col.pluck('label'), ['a', 'b', 'c', 'd']);
-    col.comparator = function(model) { return model.id; };
-    col.sort();
-    assert.equal(counter, 2);
-    assert.deepEqual(col.pluck('label'), ['d', 'c', 'b', 'a']);
-    assert.equal(col.length, 4);
-  });
+  test('clone preserves model and comparator', () => {
+    var comparator = (model) => model.id,
+        collection;
 
-  QUnit.test('String comparator.', function(assert) {
-    assert.expect(1);
-    var collection = new Schmackbone.Collection([
-      {id: 3},
-      {id: 1},
-      {id: 2}
-    ], {comparator: 'id'});
-    assert.deepEqual(collection.pluck('id'), [1, 2, 3]);
-  });
+    class _Model extends Model {}
 
-  QUnit.test('new and parse', function(assert) {
-    assert.expect(3);
-    var Collection = Schmackbone.Collection.extend({
-      parse: function(data) {
-        return _.filter(data, function(datum) {
-          return datum.a % 2 === 0;
-        });
-      }
-    });
-    var models = [{a: 1}, {a: 2}, {a: 3}, {a: 4}];
-    var collection = new Collection(models, {parse: true});
-    assert.strictEqual(collection.length, 2);
-    assert.strictEqual(collection.first().get('a'), 2);
-    assert.strictEqual(collection.last().get('a'), 4);
-  });
-
-  QUnit.test('clone preserves model and comparator', function(assert) {
-    assert.expect(3);
-    var Model = Schmackbone.Model.extend();
-    var comparator = function(model){ return model.id; };
-
-    var collection = new Schmackbone.Collection([{id: 1}], {
-      model: Model,
-      comparator: comparator
-    }).clone();
+    collection = new Collection([{id: 1}], {model: _Model, comparator}).clone();
     collection.add({id: 2});
-    assert.ok(collection.at(0) instanceof Model);
-    assert.ok(collection.at(1) instanceof Model);
-    assert.strictEqual(collection.comparator, comparator);
+    expect(collection.at(0)).toBeInstanceOf(_Model);
+    expect(collection.at(1)).toBeInstanceOf(_Model);
+    expect(collection.comparator).toEqual(comparator);
   });
 
-  QUnit.test('get', function(assert) {
-    assert.expect(6);
-    assert.equal(col.get(0), d);
-    assert.equal(col.get(d.clone()), d);
-    assert.equal(col.get(2), b);
-    assert.equal(col.get({id: 1}), c);
-    assert.equal(col.get(c.clone()), c);
-    assert.equal(col.get(col.first().cid), col.first());
+  test('get', () => {
+    expect(col.get(0)).toEqual(d);
+    expect(col.get(d.clone())).toEqual(d);
+    expect(col.get(2)).toEqual(b);
+    expect(col.get({id: 1})).toEqual(c);
+    expect(col.get(c.clone())).toEqual(c);
+    expect(col.get(col.at(0).cid)).toEqual(col.at(0));
   });
 
-  QUnit.test('get with non-default ids', function(assert) {
-    assert.expect(5);
-    var MongoModel = Schmackbone.Model.extend({idAttribute: '_id'});
-    var model = new MongoModel({_id: 100});
-    var collection = new Schmackbone.Collection([model], {model: MongoModel});
-    assert.equal(collection.get(100), model);
-    assert.equal(collection.get(model.cid), model);
-    assert.equal(collection.get(model), model);
-    assert.equal(collection.get(101), void 0);
+  test('get with non-default ids', () => {
+    var model,
+        collection;
 
-    var collection2 = new Schmackbone.Collection();
-    collection2.model = MongoModel;
-    collection2.add(model.attributes);
-    assert.equal(collection2.get(model.clone()), collection2.first());
+    class MongoModel extends Model {
+      get idAttribute() {
+        return '_id';
+      }
+    }
+
+    model = new MongoModel({_id: 100});
+    collection = new Collection([model], {model: MongoModel});
+
+    expect(collection.get(100)).toEqual(model);
+    expect(collection.get(model.cid)).toEqual(model);
+    expect(collection.get(model)).toEqual(model);
+    expect(collection.get(101)).not.toBeDefined();
+
+    collection = new Collection();
+    collection.model = MongoModel;
+    collection.add(model.attributes);
+    expect(collection.get(model.clone())).toEqual(collection.at(0));
   });
 
+  /*
   QUnit.test('has', function(assert) {
     assert.expect(15);
     assert.ok(col.has(a));
@@ -2232,4 +2242,5 @@
     var collection = new Schmackbone.Collection([model]);
     assert.ok(collection.get(model));
   });
-})(QUnit);
+  */
+});

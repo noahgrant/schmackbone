@@ -1,42 +1,39 @@
-(function(QUnit) {
+import Events from '../lib/events';
 
-  QUnit.module('Schmackbone.Events');
+describe('Schmackbone.Events', () => {
+  test('on and trigger', () => {
+    var obj = {counter: 0, ...Events};
 
-  QUnit.test('on and trigger', function(assert) {
-    assert.expect(2);
-    var obj = {counter: 0};
-    _.extend(obj, Schmackbone.Events);
-    obj.on('event', function() { obj.counter += 1; });
+    obj.on('event', () => obj.counter += 1);
     obj.trigger('event');
-    assert.equal(obj.counter, 1, 'counter should be incremented.');
+    expect(obj.counter).toEqual(1);
     obj.trigger('event');
     obj.trigger('event');
     obj.trigger('event');
     obj.trigger('event');
-    assert.equal(obj.counter, 5, 'counter should be incremented five times.');
+    expect(obj.counter).toEqual(5);
   });
 
-  QUnit.test('binding and triggering multiple events', function(assert) {
-    assert.expect(4);
-    var obj = {counter: 0};
-    _.extend(obj, Schmackbone.Events);
+  test('binding and triggering multiple events', () => {
+    var obj = {counter: 0, ...Events};
 
-    obj.on('a b c', function() { obj.counter += 1; });
+    obj.on('a b c', () => obj.counter += 1);
 
     obj.trigger('a');
-    assert.equal(obj.counter, 1);
+    expect(obj.counter).toEqual(1);
 
     obj.trigger('a b');
-    assert.equal(obj.counter, 3);
+    expect(obj.counter).toEqual(3);
 
     obj.trigger('c');
-    assert.equal(obj.counter, 4);
+    expect(obj.counter).toEqual(4);
 
     obj.off('a c');
     obj.trigger('a b c');
-    assert.equal(obj.counter, 5);
+    expect(obj.counter).toEqual(5);
   });
 
+  /*
   QUnit.test('binding and triggering with event maps', function(assert) {
     var obj = {counter: 0};
     _.extend(obj, Schmackbone.Events);
@@ -740,4 +737,5 @@
     other.trigger('test');
     assert.equal(_.size(obj._listeningTo), 0);
   });
-})(QUnit);
+  */
+});

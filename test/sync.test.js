@@ -1,57 +1,62 @@
-(function(QUnit) {
+import * as Sync from '../lib/sync';
 
-  var Library = Schmackbone.Collection.extend({
-    url: function() { return '/library'; }
-  });
-  var library;
+import Collection from '../lib/collection';
+import Model from '../lib/model';
 
-  var attrs = {
-    title: 'The Tempest',
-    author: 'Bill Shakespeare',
-    length: 123
-  };
+class Library extends Collection {
+  url() {
+    return '/library';
+  }
+}
 
-  QUnit.module('Schmackbone.sync', {
+describe('Schmackbone.sync', () => {
+  var library,
+      attrs = {
+        title: 'The Tempest',
+        author: 'Bill Shakespeare',
+        length: 123
+      };
 
-    beforeEach: function(assert) {
-      library = new Library;
-      library.create(attrs, {wait: false});
-    },
-
-    afterEach: function(assert) {
-      Schmackbone.emulateHTTP = false;
-    }
-
-  });
-
-  QUnit.test('read', function(assert) {
-    assert.expect(4);
-    library.fetch();
-    assert.equal(this.ajaxSettings.url, '/library');
-    assert.equal(this.ajaxSettings.type, 'GET');
-    assert.equal(this.ajaxSettings.dataType, 'json');
-    assert.ok(_.isEmpty(this.ajaxSettings.data));
+  beforeEach(() => {
+    library = new Library;
+    jest.spyOn(window, 'fetch').mockImplementation(() => Promise.resolve(
+      new Response(new Blob([{test: 'response!'}], {type: 'application/json'}), {status: 200})
+    ));
   });
 
-  QUnit.test('passing data', function(assert) {
-    assert.expect(3);
-    library.fetch({data: {a: 'a', one: 1}});
-    assert.equal(this.ajaxSettings.url, '/library');
-    assert.equal(this.ajaxSettings.data.a, 'a');
-    assert.equal(this.ajaxSettings.data.one, 1);
+  afterEach(() => {
+    window.fetch.mockRestore();
   });
 
-  QUnit.test('create', function(assert) {
-    assert.expect(6);
-    assert.equal(this.ajaxSettings.url, '/library');
-    assert.equal(this.ajaxSettings.type, 'POST');
-    assert.equal(this.ajaxSettings.dataType, 'json');
-    var data = JSON.parse(this.ajaxSettings.data);
-    assert.equal(data.title, 'The Tempest');
-    assert.equal(data.author, 'Bill Shakespeare');
-    assert.equal(data.length, 123);
+  test('read', async() => {
+    await library.fetch();
+
+    expect(window.fetch.mock.calls[0][0]).toEqual('/library');
+    expect(window.fetch.mock.calls[0][1].type).toEqual('GET');
+    expect(window.fetch.mock.calls[0][1].dataType).toEqual('json');
+    expect(window.fetch.mock.calls[0][1].data).not.toBeDefined();
   });
 
+  test('passing data', async() => {
+    await library.fetch({data: {a: 'a', one: 1}});
+
+    expect(window.fetch.mock.calls[0][0]).toEqual('/library?a=a&one=1');
+  });
+
+  test('create', async() => {
+    await library.create(attrs, {wait: false});
+
+    expect(window.fetch.mock.calls[0][0]).toEqual('/library');
+    expect(window.fetch.mock.calls[0][1].type).toEqual('POST');
+    expect(window.fetch.mock.calls[0][1].dataType).toEqual('json');
+    expect(JSON.parse(window.fetch.mock.calls[0][1].data)).toEqual({
+      title: 'The Tempest',
+      author: 'Bill Shakespeare',
+      length: 123
+    });
+  });
+
+  /*
   QUnit.test('update', function(assert) {
     assert.expect(7);
     library.first().save({id: '1-the-tempest', author: 'William Shakespeare'});
@@ -141,7 +146,7 @@
 
   QUnit.test('urlError', function(assert) {
     assert.expect(2);
-    var model = new Schmackbone.Model();
+    var model = new Model();
     assert.raises(function() {
       model.fetch();
     });
@@ -151,9 +156,9 @@
 
   QUnit.test('#1052 - `options` is optional.', function(assert) {
     assert.expect(0);
-    var model = new Schmackbone.Model();
+    var model = new Model();
     model.url = '/test';
-    Schmackbone.sync('create', model);
+    sync('create', model);
   });
 
   QUnit.test('Schmackbone.ajax', function(assert) {
@@ -176,34 +181,6 @@
     this.ajaxSettings.error();
   });
 
-  QUnit.test('Use Schmackbone.emulateHTTP as default.', function(assert) {
-    assert.expect(2);
-    var model = new Schmackbone.Model;
-    model.url = '/test';
-
-    Schmackbone.emulateHTTP = true;
-    model.sync('create', model);
-    assert.strictEqual(this.ajaxSettings.emulateHTTP, true);
-
-    Schmackbone.emulateHTTP = false;
-    model.sync('create', model);
-    assert.strictEqual(this.ajaxSettings.emulateHTTP, false);
-  });
-
-  QUnit.test('Use Schmackbone.emulateJSON as default.', function(assert) {
-    assert.expect(2);
-    var model = new Schmackbone.Model;
-    model.url = '/test';
-
-    Schmackbone.emulateJSON = true;
-    model.sync('create', model);
-    assert.strictEqual(this.ajaxSettings.emulateJSON, true);
-
-    Schmackbone.emulateJSON = false;
-    model.sync('create', model);
-    assert.strictEqual(this.ajaxSettings.emulateJSON, false);
-  });
-
   QUnit.test('#1756 - Call user provided beforeSend function.', function(assert) {
     assert.expect(4);
     Schmackbone.emulateHTTP = true;
@@ -223,4 +200,5 @@
     });
     assert.strictEqual(this.ajaxSettings.beforeSend(xhr), false);
   });
-})(QUnit);
+  */
+});

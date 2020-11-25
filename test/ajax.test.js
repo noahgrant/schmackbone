@@ -2,7 +2,6 @@ import * as Config from '../lib/config.js';
 import * as Sync from '../lib/sync.js';
 
 import Model from '../lib/model.js';
-import {waitsFor} from './test-utils.js';
 
 class TestModel extends Model {
   url = () => '/test_path'
@@ -14,103 +13,100 @@ describe('ajax', () => {
   beforeEach(() => {
     // overrides test-suite-wide ajax stub, because here we stub window.fetch
     Sync.ajax = originalAjax;
-    spyOn(window, 'fetch').and.callFake(() => Promise.resolve(
+    jest.spyOn(window, 'fetch').mockImplementation(() => Promise.resolve(
       new Response(new Blob([{test: 'response!'}], {type: 'application/json'}), {status: 200})
     ));
   });
 
-  afterEach(async(done) => {
-    // wait a frame to ensure all mocked promises run to completion
-    window.requestAnimationFrame(done);
+  afterEach(() => {
+    window.fetch.mockRestore();
   });
 
-  it('adds a \'response\' property in the sync method', () => {
+  test('adds a \'response\' property in the sync method', () => {
     var options = {};
 
-    spyOn(Sync, 'ajax');
+    jest.spyOn(Sync, 'ajax').mockReturnValue();
     Sync.default('fetch', new TestModel(), options);
     expect(options.response).toEqual({});
+    Sync.ajax.mockRestore();
   });
 
-  it('appends query params to the url if there are any and if a GET', () => {
-    new TestModel().fetch({data: {zorah: 'thefung', noah: 'thegrant'}});
+  test('appends query params to the url if there are any and if a GET', async() => {
+    await new TestModel().fetch({data: {zorah: 'thefung', noah: 'thegrant'}});
 
-    expect(window.fetch.lastCall.args[0]).toEqual('/test_path?zorah=thefung&noah=thegrant');
+    expect(window.fetch.mock.calls[0][0]).toEqual('/test_path?zorah=thefung&noah=thegrant');
   });
 
-  it('can pass custom headers', () => {
-    new TestModel().fetch({headers: {'Coffee Region': 'Ethiopia'}});
+  test('can pass custom headers', async() => {
+    await new TestModel().fetch({headers: {'Coffee Region': 'Ethiopia'}});
 
-    expect(window.fetch.lastCall.args[1].headers).toEqual({
+    expect(window.fetch.mock.calls[0][1].headers).toEqual({
       Accept: 'application/json',
       'Coffee Region': 'Ethiopia'
     });
   });
 
   describe('has a ajaxPrefilter function to alter options', () => {
-    it('that defaults to the identity function', () => {
+    test('that defaults to the identity function', async() => {
       var options = {headers: {'Test Header': 'sometestheadervalue'}};
 
-      new TestModel().fetch(options);
+      await new TestModel().fetch(options);
 
       expect(options).toEqual(Config.getAjaxPrefilter()(options));
 
-      expect(window.fetch.lastCall.args[1].headers).toEqual({
+      expect(window.fetch.mock.calls[0][1].headers).toEqual({
         Accept: 'application/json',
         'Test Header': 'sometestheadervalue'
       });
     });
 
-    it('that provides a hook for custom options meddling', () => {
-      var errorSpy = jasmine.createSpy('error');
+    test('that provides a hook for custom options meddling', async() => {
+      var errorSpy = jest.fn();
 
-      Config.setAjaxPrefilter(jasmine.createSpy('prefilter').and.callFake((options) => ({
+      Config.setAjaxPrefilter(jest.fn((options) => ({
         ...options,
         error: errorSpy,
         headers: {...options.headers, Authorization: 'Bearer SECRET'}
       })));
-      spyOn(Sync, 'default');
+      jest.spyOn(Sync, 'default');
 
-      new TestModel().fetch();
+      await new TestModel().fetch();
 
-      expect(Sync.default.lastCall.args[0].error).not.toBeDefined();
-      expect(window.fetch.lastCall.args[1].headers.Authorization).toBeDefined();
-      expect(window.fetch.lastCall.args[1].error).toEqual(errorSpy);
+      expect(Sync.default.mock.calls[0][0].error).not.toBeDefined();
+      expect(window.fetch.mock.calls[0][1].headers.Authorization).toBeDefined();
+      expect(window.fetch.mock.calls[0][1].error).toEqual(errorSpy);
+      Sync.default.mockRestore();
+    });
+  });
+
+  describe('passes \'Content-Type\' headers', () => {
+    test('if a body is passed for an http type that accepts a body', async() => {
+      await new TestModel().fetch({data: {zoah: 'thefungrant'}});
+      // no body, because this is a GET
+      expect(window.fetch.mock.calls[0][1].headers['Content-Type']).not.toBeDefined();
+
+      await new TestModel().save({zoah: 'thefungrant'});
+      // as a save call, backbone should add app json to the body
+      expect(window.fetch.mock.calls[1][1].headers['Content-Type']).toEqual('application/json');
+
+      // as a destroy call, this has no body
+      await new TestModel({id: 'zoah', zoah: 'thefungrant'}).destroy();
+      expect(window.fetch.mock.calls[2][1].headers['Content-Type']).not.toBeDefined();
+    });
+
+    test('that defaults to www-form-urlencoded', async() => {
+      // a manual fetch with a POST will use the defaults
+      await new TestModel().fetch({type: 'POST', data: {zoah: 'thefungrant'}});
+      expect(window.fetch.mock.calls[0][1].headers['Content-Type'])
+          .toEqual('application/x-www-form-urlencoded; charset=UTF-8');
+
+      // can pass custom content type
+      await new TestModel().save({zoah: 'thefungrant'}, {contentType: 'application/text'});
+      expect(window.fetch.mock.calls[1][1].headers['Content-Type']).toEqual('application/text');
     });
   });
 
   /*
-  QUnit.module('passes \'Content-Type\' headers', () => {
-    QUnit.test('if a body is passed for an http type that accepts a body', (assert) => {
-      new TestModel().fetch({data: {zoah: 'thefungrant'}});
-      // no body, because this is a GET
-      assert.notOk(window.fetch.lastCall.args[1].headers['Content-Type']);
-
-      new TestModel().save({zoah: 'thefungrant'});
-      // as a save or destroy call, backbone should add app json to the body
-      assert.equal(window.fetch.lastCall.args[1].headers['Content-Type'], 'application/json');
-
-      new TestModel({zoah: 'thefungrant'}).destroy();
-      assert.equal(window.fetch.lastCall.args[1].headers['Content-Type'], 'application/json');
-    });
-
-    QUnit.test('that defaults to www-form-urlencoded', (assert) => {
-      // a manual fetch with a POST will use the defaults
-      new TestModel().fetch({type: 'POST', data: {zoah: 'thefungrant'}});
-      assert.equal(
-        window.fetch.lastCall.args[1].headers['Content-Type'],
-        'application/x-www-form-urlencoded; charset=UTF-8'
-      );
-
-      // can pass custom content type
-      new TestModel().save({zoah: 'thefungrant'}, {contentType: 'application/text'});
-      assert.equal(
-        window.fetch.lastCall.args[1].headers['Content-Type'],
-        'application/text'
-      );
-    });
-  });
-
   QUnit.module('stringifies body data', () => {
     QUnit.test('if it exists, is for an http type that accepts a body, and is ' +
        'not already a string', (assert) => {

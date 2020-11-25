@@ -6,7 +6,7 @@
   "env": {
     "browser": true,
     "commonjs": true,
-    "jasmine": true,
+    "jest": true,
     "es6": true,
     "node": true
   },
@@ -156,19 +156,6 @@
     "vars-on-top": 2,
     "wrap-iife": [2, "inside"],
     "yoda": [2, "never", {"exceptRange": true}]
-  },
-  "globals": {
-    "babel": false,
-    "Bloodhound": false,
-    "CodeMirror": false,
-    "confirm": false,
-    "fetch": false,
-    "FontFaceObserver": false,
-    "mapboxgl": false,
-    "mixpanel": false,
-    "mostRecentAjaxRequest": false,
-    "mpPageName": false,
-    "olark": false
   },
   "plugins": [
     "sift"

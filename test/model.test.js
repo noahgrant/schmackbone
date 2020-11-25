@@ -1,39 +1,59 @@
-(function(QUnit) {
+import Collection from '../lib/collection';
+import Model from '../lib/model';
 
-  var ProxyModel = Schmackbone.Model.extend();
-  var Klass = Schmackbone.Collection.extend({
-    url: function() { return '/collection'; }
+class ProxyModel extends Model {}
+class Klass extends Collection {
+  url() {
+    return '/collection';
+  }
+}
+
+describe('Schmackbone.Model', () => {
+  var doc,
+      collection;
+
+  beforeEach(() => {
+    doc = new ProxyModel({
+      id: '1-the-tempest',
+      title: 'The Tempest',
+      author: 'Bill Shakespeare',
+      length: 123
+    });
+    collection = new Klass();
+    collection.add(doc);
   });
-  var doc, collection;
 
-  QUnit.module('Schmackbone.Model', {
+  it('preinitialize', () => {
+    var model;
 
-    beforeEach: function(assert) {
-      doc = new ProxyModel({
-        id: '1-the-tempest',
-        title: 'The Tempest',
-        author: 'Bill Shakespeare',
-        length: 123
-      });
-      collection = new Klass();
-      collection.add(doc);
+    class _Model extends Model {
+      preinitialize() {
+        this.one = 1;
+      }
     }
 
+    model = new _Model({}, {collection});
+
+    expect(model.one).toEqual(1);
+    expect(model.collection).toEqual(collection);
   });
 
-  QUnit.test('initialize', function(assert) {
-    assert.expect(3);
-    var Model = Schmackbone.Model.extend({
-      initialize: function() {
+  it('initialize', () => {
+    var model;
+
+    class _Model extends Model {
+      initialize() {
         this.one = 1;
-        assert.equal(this.collection, collection);
       }
-    });
-    var model = new Model({}, {collection: collection});
-    assert.equal(model.one, 1);
-    assert.equal(model.collection, collection);
+    }
+
+    model = new _Model({}, {collection});
+
+    expect(model.one).toEqual(1);
+    expect(model.collection).toEqual(collection);
   });
 
+  /*
   QUnit.test('Object.prototype properties are overridden by attributes', function(assert) {
     assert.expect(1);
     var model = new Schmackbone.Model({hasOwnProperty: true});
@@ -61,20 +81,6 @@
     });
     var model = new Model({value: 1}, {parse: true});
     assert.equal(model.get('value'), 2);
-  });
-
-
-  QUnit.test('preinitialize', function(assert) {
-    assert.expect(2);
-    var Model = Schmackbone.Model.extend({
-
-      preinitialize: function() {
-        this.one = 1;
-      }
-    });
-    var model = new Model({}, {collection: collection});
-    assert.equal(model.one, 1);
-    assert.equal(model.collection, collection);
   });
 
   QUnit.test('preinitialize occurs before the model is set up', function(assert) {
@@ -1509,5 +1515,5 @@
     model.set({id: 3});
     assert.equal(model.id, 3);
   });
-
-})(QUnit);
+*/
+});

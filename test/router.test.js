@@ -1,87 +1,37 @@
-(function(QUnit) {
+import History, {history} from '../lib/history';
+import Router from '../lib/router';
 
-  var router = null;
-  var location = null;
-  var lastRoute = null;
-  var lastArgs = [];
+var router = null;
+var lastRoute = null;
+var lastArgs = [];
 
-  var onRoute = function(routerParam, route, args) {
-    lastRoute = route;
-    lastArgs = args;
-  };
+const onRoute = function(routerParam, route, args) {
+  lastRoute = route;
+  lastArgs = args;
+};
 
-  var Location = function(href) {
-    this.replace(href);
-  };
+const ExternalObject = {
+  value: 'unset',
 
-  _.extend(Location.prototype, {
+  routingFunction(value) {
+    this.value = value;
+  }
+};
 
-    parser: document.createElement('a'),
+ExternalObject.routingFunction = ExternalObject.routingFunction.bind(ExternalObject);
 
-    replace: function(href) {
-      this.parser.href = href;
-      _.extend(this, _.pick(this.parser,
-        'href',
-        'hash',
-        'host',
-        'search',
-        'fragment',
-        'pathname',
-        'protocol'
-      ));
+class _Router extends Router {
+  count = 0
 
-      // In IE, anchor.pathname does not contain a leading slash though
-      // window.location.pathname does.
-      if (!/^\//.test(this.pathname)) this.pathname = '/' + this.pathname;
-    },
-
-    toString: function() {
-      return this.href;
-    }
-
-  });
-
-  QUnit.module('Schmackbone.Router', {
-
-    beforeEach: function() {
-      location = new Location('http://example.com');
-      Schmackbone.history = _.extend(new Schmackbone.History, {location: location});
-      router = new Router({testing: 101});
-      Schmackbone.history.interval = 9;
-      Schmackbone.history.start({pushState: false});
-      lastRoute = null;
-      lastArgs = [];
-      Schmackbone.history.on('route', onRoute);
-    },
-
-    afterEach: function() {
-      Schmackbone.history.stop();
-      Schmackbone.history.off('route', onRoute);
-    }
-
-  });
-
-  var ExternalObject = {
-    value: 'unset',
-
-    routingFunction: function(value) {
-      this.value = value;
-    }
-  };
-  ExternalObject.routingFunction = _.bind(ExternalObject.routingFunction, ExternalObject);
-
-  var Router = Schmackbone.Router.extend({
-
-    count: 0,
-
-    routes: {
-      'noCallback': 'noCallback',
-      'counter': 'counter',
+  routes() {
+    return {
+      noCallback: 'noCallback',
+      counter: 'counter',
       'search/:query': 'search',
       'search/:query/p:page': 'search',
-      'charñ': 'charUTF',
+      charñ: 'charUTF',
       'char%C3%B1': 'charEscaped',
-      'contacts': 'contacts',
+      contacts: 'contacts',
       'contacts/new': 'newContact',
       'contacts/:id': 'loadContact',
       'route-event/:arg': 'routeEvent',
@@ -94,113 +44,146 @@
       'query/:entity': 'query',
       'function/:value': ExternalObject.routingFunction,
       '*anything': 'anything'
-    },
+    };
+  }
 
-    preinitialize: function(options) {
-      this.testpreinit = 'foo';
-    },
+  preinitialize(options) {
+    this.testpreinit = 'foo';
+  }
 
-    initialize: function(options) {
-      this.testing = options.testing;
-      this.route('implicit', 'implicit');
-    },
+  initialize(options) {
+    this.testing = options.testing;
+    this.route('implicit', 'implicit');
+  }
 
-    counter: function() {
-      this.count++;
-    },
+  counter() {
+    this.count++;
+  }
 
-    implicit: function() {
-      this.count++;
-    },
+  implicit() {
+    this.count++;
+  }
 
-    search: function(query, page) {
-      this.query = query;
-      this.page = page;
-    },
+  search(query, page) {
+    this.query = query;
+    this.page = page;
+  }
 
-    charUTF: function() {
-      this.charType = 'UTF';
-    },
+  charUTF() {
+    this.charType = 'UTF';
+  }
 
-    charEscaped: function() {
-      this.charType = 'escaped';
-    },
+  charEscaped() {
+    this.charType = 'escaped';
+  }
 
-    contacts: function() {
-      this.contact = 'index';
-    },
+  contacts() {
+    this.contact = 'index';
+  }
 
-    newContact: function() {
-      this.contact = 'new';
-    },
+  newContact() {
+    this.contact = 'new';
+  }
 
-    loadContact: function() {
-      this.contact = 'load';
-    },
+  loadContact() {
+    this.contact = 'load';
+  }
 
-    optionalItem: function(arg) {
-      this.arg = arg !== void 0 ? arg : null;
-    },
+  optionalItem(arg) {
+    this.arg = arg !== undefined ? arg : null;
+  }
 
-    splat: function(args) {
-      this.args = args;
-    },
+  splat(args) {
+    this.args = args;
+  }
 
-    github: function(repo, from, to) {
-      this.repo = repo;
-      this.from = from;
-      this.to = to;
-    },
+  github(repo, from, to) {
+    this.repo = repo;
+    this.from = from;
+    this.to = to;
+  }
 
-    complex: function(first, part, rest) {
-      this.first = first;
-      this.part = part;
-      this.rest = rest;
-    },
+  complex(first, part, rest) {
+    this.first = first;
+    this.part = part;
+    this.rest = rest;
+  }
 
-    query: function(entity, args) {
-      this.entity    = entity;
-      this.queryArgs = args;
-    },
+  query(entity, args) {
+    this.entity = entity;
+    this.queryArgs = args;
+  }
 
-    anything: function(whatever) {
-      this.anything = whatever;
-    },
+  anything(whatever) {
+    this.anything = whatever;
+  }
 
-    namedOptional: function(z) {
-      this.z = z;
-    },
+  namedOptional(_z) {
+    this.z = _z;
+  }
 
-    decode: function(named, path) {
-      this.named = named;
-      this.path = path;
-    },
+  decode(named, path) {
+    this.named = named;
+    this.path = path;
+  }
 
-    routeEvent: function(arg) {
-    }
+  routeEvent(arg) {}
+}
 
+describe('Schmackbone.Router', () => {
+  var originalLocation;
+
+  beforeEach(() => {
+    originalLocation = window.location;
+
+    delete window.location;
+
+    window.location = {
+      href: '',
+      pathname: '',
+      replace(href) {
+        var url = new URL(href);
+
+        this.pathname = url.pathname;
+        this.origin = url.origin;
+        this.href = url.href;
+        this.search = url.search;
+      }
+    };
+
+    history.location = window.location;
+    router = new _Router({testing: 101});
+    history.interval = 9;
+    history.start();
+    lastRoute = null;
+    lastArgs = [];
+    history.on('route', onRoute);
   });
 
-  QUnit.test('initialize', function(assert) {
-    assert.expect(1);
-    assert.equal(router.testing, 101);
+  afterEach(() => {
+    window.location = originalLocation;
+    history.stop();
+    history.off('route', onRoute);
   });
 
-  QUnit.test('preinitialize', function(assert) {
-    assert.expect(1);
-    assert.equal(router.testpreinit, 'foo');
+  test('initialize', () => {
+    expect(router.testing).toEqual(101);
   });
 
-  QUnit.test('routes (simple)', function(assert) {
-    assert.expect(4);
-    location.replace('http://example.com#search/news');
-    Schmackbone.history.checkUrl();
-    assert.equal(router.query, 'news');
-    assert.equal(router.page, void 0);
-    assert.equal(lastRoute, 'search');
-    assert.equal(lastArgs[0], 'news');
+  test('preinitialize', () => {
+    expect(router.testpreinit).toEqual('foo');
   });
 
+  test('routes (simple)', () => {
+    window.location.replace('http://example.com/search/news');
+    history.checkUrl();
+    expect(router.query).toEqual('news');
+    expect(router.page).toBe(null);
+    expect(lastRoute).toEqual('search');
+    expect(lastArgs[0]).toEqual('news');
+  });
+
+  /*
   QUnit.test('routes (simple, but unicode)', function(assert) {
     assert.expect(4);
     location.replace('http://example.com#search/тест');
@@ -1077,5 +1060,5 @@
     Schmackbone.history.navigate(route);
     assert.strictEqual(location.hash, '#' + route);
   });
-
-})(QUnit);
+  */
+});
