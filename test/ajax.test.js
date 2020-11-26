@@ -1,7 +1,7 @@
-import * as Config from '../lib/config.js';
-import * as Sync from '../lib/sync.js';
+import * as Config from '../lib/config';
+import * as Sync from '../lib/sync';
 
-import Model from '../lib/model.js';
+import Model from '../lib/model';
 
 class TestModel extends Model {
   url = () => '/test_path'
@@ -76,6 +76,7 @@ describe('ajax', () => {
       expect(window.fetch.mock.calls[0][1].headers.Authorization).toBeDefined();
       expect(window.fetch.mock.calls[0][1].error).toEqual(errorSpy);
       Sync.default.mockRestore();
+      Config.setAjaxPrefilter((_x) => _x);
     });
   });
 
@@ -106,141 +107,153 @@ describe('ajax', () => {
     });
   });
 
-  /*
-  QUnit.module('stringifies body data', () => {
-    QUnit.test('if it exists, is for an http type that accepts a body, and is ' +
-       'not already a string', (assert) => {
-      new TestModel().fetch({data: {zorah: 'thefung', noah: 'thegrant'}});
+  describe('stringifies body data', () => {
+    test('if it exists, is for an http type that accepts a body, and is ' +
+       'not already a string', async() => {
+      await new TestModel().fetch({data: {zorah: 'thefung', noah: 'thegrant'}});
       // no body, because this is a GET
-      assert.notOk(!!window.fetch.lastCall.args[1].body);
+      expect(window.fetch.mock.calls[0][1].body).not.toBeDefined();
 
-      new TestModel().fetch({type: 'HEAD', data: {zorah: 'thefung', noah: 'thegrant'}});
+      await new TestModel().fetch({type: 'HEAD', data: {zorah: 'thefung', noah: 'thegrant'}});
       // no body, because this is a HEAD
-      assert.notOk(!!window.fetch.lastCall.args[1].body);
+      expect(window.fetch.mock.calls[1][1].body).not.toBeDefined();
 
-      new TestModel().fetch({type: 'POST'});
+      await new TestModel().fetch({type: 'POST'});
       // no body, so no body sent
-      assert.notOk(!!window.fetch.lastCall.args[1].body);
+      expect(window.fetch.mock.calls[2][1].body).not.toBeDefined();
 
-      sinon.spy(Sync, 'ajax');
-
-      new TestModel().save({zorah: 'thefung', noah: 'thegrant'});
+      await new TestModel().save({zorah: 'thefung', noah: 'thegrant'});
       // body should get JSON-stringified by backbone
-      assert.equal(
-        Sync.ajax.lastCall.args[0].data,
-        '{"zorah":"thefung","noah":"thegrant"}'
-      );
-      // and then it just gets passed directly
-      assert.equal(
-        window.fetch.lastCall.args[1].body,
+      expect(window.fetch.mock.calls[3][1].body).toEqual(
         '{"zorah":"thefung","noah":"thegrant"}'
       );
     });
 
-    QUnit.test('query-param stringifies by default, or JSON-stringifies for JSON mime type data',
-      (assert) => {
-        new TestModel().fetch({type: 'POST', data: {zorah: 'thefung', noah: 'thegrant'}});
-        assert.equal(window.fetch.lastCall.args[1].body, 'zorah=thefung&noah=thegrant');
+    test('query-param stringifies by default, or JSON-stringifies for JSON mime type data',
+      async() => {
+        await new TestModel().fetch({type: 'POST', data: {zorah: 'thefung', noah: 'thegrant'}});
+        expect(window.fetch.mock.calls[0][1].body).toEqual('zorah=thefung&noah=thegrant');
 
-        new TestModel().fetch({
+        await new TestModel().fetch({
           type: 'POST',
           contentType: 'application/json',
           data: {zorah: 'thefung', noah: 'thegrant'}
         });
 
-        assert.equal(
-          window.fetch.lastCall.args[1].body,
-          '{"zorah":"thefung","noah":"thegrant"}'
-        );
+        expect(window.fetch.mock.calls[1][1].body).toEqual('{"zorah":"thefung","noah":"thegrant"}');
       });
   });
 
-  QUnit.test('copies the response properties to the added options.response', async(assert) => {
-    var options = {},
-        done = assert.async();
+  test('copies the response properties to the added options.response', async() => {
+    var options = {};
 
-    Sync.default('fetch', new TestModel(), options);
-    await waitsFor(() => 'status' in options.response);
+    await Sync.default('fetch', new TestModel(), options);
 
-    assert.equal(options.response.status, 200);
-    assert.ok(options.response.ok);
-    assert.ok(!!options.response.json);
-
-    done();
+    expect(options.response.status).toEqual(200);
+    expect(options.response.ok).toBe(true);
+    expect(!!options.response.json).toBe(true);
   });
 
-  QUnit.test('does not throw an error for malformed json', async(assert) => {
-    var successSpy = sinon.spy(),
-        done = assert.async();
+  test('does not throw an error for malformed json', async() => {
+    var successSpy = jest.fn();
 
     // ie 204 content, we catch and pass an empty object
-    window.fetch.callsFake(() => Promise.resolve(
+    window.fetch.mockImplementation(() => Promise.resolve(
       new Response('', {type: 'application/json'}),
       {status: 204}
     ));
 
-    new TestModel().fetch({success: successSpy});
-    await waitsFor(() => successSpy.callCount);
+    await new TestModel().fetch({success: successSpy});
 
-    assert.propEqual(successSpy.lastCall.args[1], {});
-    done();
+    expect(successSpy.mock.calls[0][1]).toEqual({});
   });
 
-  QUnit.test('calls success and error callbacks as appropriate, with the correct params',
-    async(assert) => {
-      var successSpy = sinon.spy(),
-          errorSpy = sinon.spy(),
+  test('calls success and error callbacks as appropriate, with the correct params',
+    async() => {
+      var successSpy = jest.fn(),
+          errorSpy = jest.fn(),
           model = new TestModel(),
           errorResponse = new Response(
             new Blob([{test: 'response!'}], {type: 'application/json'}),
             {status: 400}
-          ),
-          done = assert.async();
+          );
 
-      model.fetch({success: successSpy, error: errorSpy});
-      await waitsFor(() => successSpy.callCount);
+      await model.fetch({success: successSpy, error: errorSpy});
 
-      assert.equal(successSpy.lastCall.args[0], model);
-      assert.propEqual(successSpy.lastCall.args[1], {});
-      assert.ok(typeof successSpy.lastCall.args[2] === 'object');
-      assert.ok(!!successSpy.lastCall.args[2].response);
+      expect(successSpy.mock.calls[0][0]).toEqual(model);
+      expect(successSpy.mock.calls[0][1]).toEqual({});
+      expect(successSpy.mock.calls[0][2]).toEqual(expect.any(Object));
+      expect(!!successSpy.mock.calls[0][2].response).toBe(true);
 
       // now test error
-      window.fetch.callsFake(() => Promise.resolve(errorResponse));
+      window.fetch.mockImplementation(() => Promise.resolve(errorResponse));
 
-      model.fetch({success: successSpy, error: errorSpy});
-      await waitsFor(() => errorSpy.callCount);
+      await model.fetch({success: successSpy, error: errorSpy}).catch(() => {});
 
-      assert.equal(errorSpy.lastCall.args[0], model);
-      assert.propEqual(errorSpy.lastCall.args[1], _.extend({}, errorResponse, {json: {}}));
-      assert.ok(typeof successSpy.lastCall.args[2] === 'object');
-
-      done();
+      expect(errorSpy.mock.calls[0][0]).toEqual(model);
+      expect(errorSpy.mock.calls[0][1]).toEqual(expect.any(Object));
+      expect(errorSpy.mock.calls[0][2]).toEqual(expect.any(Object));
     });
 
-  QUnit.test('calls a \'complete\' callback regardless of request outcome', async(assert) => {
-    var completeSpy = sinon.spy(),
+  test('calls a \'complete\' callback regardless of request outcome', async() => {
+    var completeSpy = jest.fn(),
         errorResponse = new Response(
           new Blob([{test: 'response!'}], {type: 'application/json'}),
           {status: 400}
-        ),
-        done = assert.async();
+        );
 
     // first for success calls
-    new TestModel().fetch({complete: completeSpy});
-    await waitsFor(() => completeSpy.callCount);
+    await new TestModel().fetch({complete: completeSpy});
 
-    assert.equal(completeSpy.callCount, 1);
+    expect(completeSpy).toHaveBeenCalledTimes(1);
 
     // now test error
-    completeSpy = sinon.spy();
-    window.fetch.callsFake(() => Promise.resolve(errorResponse));
+    completeSpy = jest.fn();
+    window.fetch.mockImplementation(() => Promise.resolve(errorResponse));
 
-    new TestModel().fetch({complete: completeSpy});
-    await waitsFor(() => completeSpy.callCount);
-
-    assert.equal(completeSpy.callCount, 1);
-    done();
+    await new TestModel().fetch({complete: completeSpy}).catch(() => {});
+    expect(completeSpy).toHaveBeenCalledTimes(1);
   });
-  */
+
+  test('calls success and error promise callbacks as appropriate, with the correct params',
+    async() => {
+      var successSpy = jest.fn(),
+          errorSpy = jest.fn(),
+          model = new TestModel(),
+          errorResponse = new Response(
+            new Blob([{test: 'response!'}], {type: 'application/json'}),
+            {status: 400}
+          );
+
+      await model.fetch().then(successSpy).catch(errorSpy);
+
+      expect(successSpy.mock.calls[0][0]).toEqual([model, {}, expect.any(Object)]);
+
+      // now test error
+      window.fetch.mockImplementation(() => Promise.resolve(errorResponse));
+      await model.fetch().then(successSpy).catch(errorSpy);
+
+      expect(errorSpy.mock.calls[0][0]).toEqual([model, expect.any(Object), expect.any(Object)]);
+    });
+
+  test('calls a \'complete\' promise-based callback regardless of request outcome', async() => {
+    var completeSpy = jest.fn(),
+        errorResponse = new Response(
+          new Blob([{test: 'response!'}], {type: 'application/json'}),
+          {status: 400}
+        );
+
+    // first for success calls
+    await new TestModel().fetch().catch(() => {}).then(completeSpy);
+
+    expect(completeSpy).toHaveBeenCalledTimes(1);
+
+    // now test error
+    completeSpy = jest.fn();
+    window.fetch.mockImplementation(() => Promise.resolve(errorResponse));
+
+    await new TestModel().fetch().catch(() => {}).then(completeSpy);
+
+    expect(completeSpy).toHaveBeenCalledTimes(1);
+  });
 });

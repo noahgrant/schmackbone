@@ -1,6 +1,6 @@
 {
   "name": "schmackbone",
-  "description": "jQuery-less, View-less, Promise-interfaced Fork of BackboneJS",
+  "description": "jQuery-less, View-less, Promise-interfaced, Modularized Fork of BackboneJS",
   "url": "http://backbonejs.org",
   "keywords": [
     "model",
@@ -22,7 +22,6 @@
     "@babel/preset-env": "^7.11.5",
     "babel-eslint": "^10.1.0",
     "babel-loader": "^8.1.0",
-    "docco": "0.7.0",
     "eslint": "^7.8.1",
     "eslint-plugin-sift": "^0.3.0",
     "jest": "^26.6.3",
@@ -32,7 +31,6 @@
   },
   "scripts": {
     "build": "terser schmackbone.js --mangle --source-map \"filename=schmackbone-min.map\" -o schmackbone-min.js",
-    "doc": "docco schmackbone.js && docco examples/todos/todos.js examples/backbone.localStorage.js",
     "prepublishOnly": "babel lib -d ./",
     "lint": "eslint schmackbone.js test/*.js",
     "test": "jest --env=jest-environment-jsdom-sixteen",

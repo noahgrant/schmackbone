@@ -56,149 +56,55 @@ describe('Schmackbone.sync', () => {
     });
   });
 
-  /*
-  QUnit.test('update', function(assert) {
-    assert.expect(7);
-    library.first().save({id: '1-the-tempest', author: 'William Shakespeare'});
-    assert.equal(this.ajaxSettings.url, '/library/1-the-tempest');
-    assert.equal(this.ajaxSettings.type, 'PUT');
-    assert.equal(this.ajaxSettings.dataType, 'json');
-    var data = JSON.parse(this.ajaxSettings.data);
-    assert.equal(data.id, '1-the-tempest');
-    assert.equal(data.title, 'The Tempest');
-    assert.equal(data.author, 'William Shakespeare');
-    assert.equal(data.length, 123);
-  });
+  test('update', async() => {
+    library.add(attrs);
+    await library.at(0).save({id: '1-the-tempest', author: 'William Shakespeare'});
 
-  QUnit.test('update with emulateHTTP and emulateJSON', function(assert) {
-    assert.expect(7);
-    library.first().save({id: '2-the-tempest', author: 'Tim Shakespeare'}, {
-      emulateHTTP: true,
-      emulateJSON: true
+    expect(window.fetch.mock.calls[0][0]).toEqual('/library/1-the-tempest');
+    expect(window.fetch.mock.calls[0][1].type).toEqual('PUT');
+    expect(window.fetch.mock.calls[0][1].dataType).toEqual('json');
+    expect(JSON.parse(window.fetch.mock.calls[0][1].data)).toEqual({
+      id: '1-the-tempest',
+      title: 'The Tempest',
+      author: 'William Shakespeare',
+      length: 123
     });
-    assert.equal(this.ajaxSettings.url, '/library/2-the-tempest');
-    assert.equal(this.ajaxSettings.type, 'POST');
-    assert.equal(this.ajaxSettings.dataType, 'json');
-    assert.equal(this.ajaxSettings.data._method, 'PUT');
-    var data = JSON.parse(this.ajaxSettings.data.model);
-    assert.equal(data.id, '2-the-tempest');
-    assert.equal(data.author, 'Tim Shakespeare');
-    assert.equal(data.length, 123);
   });
 
-  QUnit.test('update with just emulateHTTP', function(assert) {
-    assert.expect(6);
-    library.first().save({id: '2-the-tempest', author: 'Tim Shakespeare'}, {
-      emulateHTTP: true
-    });
-    assert.equal(this.ajaxSettings.url, '/library/2-the-tempest');
-    assert.equal(this.ajaxSettings.type, 'POST');
-    assert.equal(this.ajaxSettings.contentType, 'application/json');
-    var data = JSON.parse(this.ajaxSettings.data);
-    assert.equal(data.id, '2-the-tempest');
-    assert.equal(data.author, 'Tim Shakespeare');
-    assert.equal(data.length, 123);
+  test('read model', async() => {
+    library.add(attrs);
+    await library.at(0).save({id: '2-the-tempest', author: 'Tim Shakespeare'});
+    await library.at(0).fetch();
+
+    expect(window.fetch.mock.calls[1][0]).toEqual('/library/2-the-tempest');
+    expect(window.fetch.mock.calls[1][1].type).toEqual('GET');
+    expect(window.fetch.mock.calls[1][1].data).not.toBeDefined();
   });
 
-  QUnit.test('update with just emulateJSON', function(assert) {
-    assert.expect(6);
-    library.first().save({id: '2-the-tempest', author: 'Tim Shakespeare'}, {
-      emulateJSON: true
-    });
-    assert.equal(this.ajaxSettings.url, '/library/2-the-tempest');
-    assert.equal(this.ajaxSettings.type, 'PUT');
-    assert.equal(this.ajaxSettings.contentType, 'application/x-www-form-urlencoded');
-    var data = JSON.parse(this.ajaxSettings.data.model);
-    assert.equal(data.id, '2-the-tempest');
-    assert.equal(data.author, 'Tim Shakespeare');
-    assert.equal(data.length, 123);
+  test('destroy', async() => {
+    library.add(attrs);
+    await library.at(0).save({id: '2-the-tempest', author: 'Tim Shakespeare'});
+    await library.at(0).destroy({wait: true});
+
+    expect(window.fetch.mock.calls[1][0]).toEqual('/library/2-the-tempest');
+    expect(window.fetch.mock.calls[1][1].type).toEqual('DELETE');
+    expect(window.fetch.mock.calls[1][1].data).not.toBeDefined();
   });
 
-  QUnit.test('read model', function(assert) {
-    assert.expect(3);
-    library.first().save({id: '2-the-tempest', author: 'Tim Shakespeare'});
-    library.first().fetch();
-    assert.equal(this.ajaxSettings.url, '/library/2-the-tempest');
-    assert.equal(this.ajaxSettings.type, 'GET');
-    assert.ok(_.isEmpty(this.ajaxSettings.data));
-  });
-
-  QUnit.test('destroy', function(assert) {
-    assert.expect(3);
-    library.first().save({id: '2-the-tempest', author: 'Tim Shakespeare'});
-    library.first().destroy({wait: true});
-    assert.equal(this.ajaxSettings.url, '/library/2-the-tempest');
-    assert.equal(this.ajaxSettings.type, 'DELETE');
-    assert.equal(this.ajaxSettings.data, null);
-  });
-
-  QUnit.test('destroy with emulateHTTP', function(assert) {
-    assert.expect(3);
-    library.first().save({id: '2-the-tempest', author: 'Tim Shakespeare'});
-    library.first().destroy({
-      emulateHTTP: true,
-      emulateJSON: true
-    });
-    assert.equal(this.ajaxSettings.url, '/library/2-the-tempest');
-    assert.equal(this.ajaxSettings.type, 'POST');
-    assert.equal(JSON.stringify(this.ajaxSettings.data), '{"_method":"DELETE"}');
-  });
-
-  QUnit.test('urlError', function(assert) {
-    assert.expect(2);
+  test('urlError', async() => {
     var model = new Model();
-    assert.raises(function() {
-      model.fetch();
-    });
-    model.fetch({url: '/one/two'});
-    assert.equal(this.ajaxSettings.url, '/one/two');
+
+    expect(() => model.fetch()).toThrow();
+
+    await model.fetch({url: '/one/two'});
+    expect(window.fetch.mock.calls[0][0]).toEqual('/one/two');
   });
 
-  QUnit.test('#1052 - `options` is optional.', function(assert) {
-    assert.expect(0);
+  test('#1052 - `options` is optional', async() => {
     var model = new Model();
-    model.url = '/test';
-    sync('create', model);
-  });
 
-  QUnit.test('Schmackbone.ajax', function(assert) {
-    assert.expect(1);
-    Schmackbone.ajax = function(settings) {
-      assert.strictEqual(settings.url, '/test');
-    };
-    var model = new Schmackbone.Model();
     model.url = '/test';
-    Schmackbone.sync('create', model);
-  });
 
-  QUnit.test('Call provided error callback on error.', function(assert) {
-    assert.expect(1);
-    var model = new Schmackbone.Model;
-    model.url = '/test';
-    Schmackbone.sync('read', model, {
-      error: function() { assert.ok(true); }
-    });
-    this.ajaxSettings.error();
+    await Sync.default('create', model);
   });
-
-  QUnit.test('#1756 - Call user provided beforeSend function.', function(assert) {
-    assert.expect(4);
-    Schmackbone.emulateHTTP = true;
-    var model = new Schmackbone.Model;
-    model.url = '/test';
-    var xhr = {
-      setRequestHeader: function(header, value) {
-        assert.strictEqual(header, 'X-HTTP-Method-Override');
-        assert.strictEqual(value, 'DELETE');
-      }
-    };
-    model.sync('delete', model, {
-      beforeSend: function(_xhr) {
-        assert.ok(_xhr === xhr);
-        return false;
-      }
-    });
-    assert.strictEqual(this.ajaxSettings.beforeSend(xhr), false);
-  });
-  */
 });

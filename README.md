@@ -15,9 +15,11 @@
 # Schmackbone.js
 
 Schmackbone is a fork of the established MV-library [Backbone](https://github.com/jashkenas/backbone), with the View-logic and
-jQuery removed. `Schmackbone.ajax` uses the Promise-based `window.fetch`. This all happens under the hood; you can use model methods
+jQuery removed. (So it's really just M.)`Schmackbone.ajax` uses the Promise-based `window.fetch`. This all happens under the hood; you can use model methods
 like `.fetch()`, `.destroy()`, and `.save()` like you would normally (see additional [Promise caveat](#requests-have-a-promise-interface) below)
 &nbsp;&ndash;&nbsp;you just won't be using jQuery.
+
+Finally, Schmackbone is modularized with ES6 imports, allowing you to use only what you need and tree-shake the rest.
 
 ## Why?
 

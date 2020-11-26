@@ -1,5 +1,7 @@
 import Events from '../lib/events';
+import {size} from 'underscore';
 
+/* eslint-disable id-length */
 describe('Schmackbone.Events', () => {
   test('on and trigger', () => {
     var obj = {counter: 0, ...Events};
@@ -33,14 +35,11 @@ describe('Schmackbone.Events', () => {
     expect(obj.counter).toEqual(5);
   });
 
-  /*
-  QUnit.test('binding and triggering with event maps', function(assert) {
-    var obj = {counter: 0};
-    _.extend(obj, Schmackbone.Events);
-
-    var increment = function() {
-      this.counter += 1;
-    };
+  test('binding and triggering with event maps', () => {
+    var obj = {counter: 0, ...Events},
+        increment = function() {
+          this.counter += 1;
+        };
 
     obj.on({
       a: increment,
@@ -49,533 +48,588 @@ describe('Schmackbone.Events', () => {
     }, obj);
 
     obj.trigger('a');
-    assert.equal(obj.counter, 1);
+    expect(obj.counter).toEqual(1);
 
     obj.trigger('a b');
-    assert.equal(obj.counter, 3);
+    expect(obj.counter).toEqual(3);
 
     obj.trigger('c');
-    assert.equal(obj.counter, 4);
+    expect(obj.counter).toEqual(4);
 
     obj.off({
       a: increment,
       c: increment
     }, obj);
     obj.trigger('a b c');
-    assert.equal(obj.counter, 5);
+    expect(obj.counter).toEqual(5);
   });
 
-  QUnit.test('binding and triggering multiple event names with event maps', function(assert) {
-    var obj = {counter: 0};
-    _.extend(obj, Schmackbone.Events);
+  test('binding and triggering multiple event names with event maps', () => {
+    var obj = {counter: 0, ...Events},
+        increment = function() {
+          this.counter += 1;
+        };
 
-    var increment = function() {
-      this.counter += 1;
-    };
-
-    obj.on({
-      'a b c': increment
-    });
+    obj.on({'a b c': increment});
 
     obj.trigger('a');
-    assert.equal(obj.counter, 1);
+    expect(obj.counter).toEqual(1);
 
     obj.trigger('a b');
-    assert.equal(obj.counter, 3);
+    expect(obj.counter).toEqual(3);
 
     obj.trigger('c');
-    assert.equal(obj.counter, 4);
+    expect(obj.counter).toEqual(4);
 
-    obj.off({
-      'a c': increment
-    });
+    obj.off({'a c': increment});
     obj.trigger('a b c');
-    assert.equal(obj.counter, 5);
+    expect(obj.counter).toEqual(5);
   });
 
-  QUnit.test('binding and trigger with event maps context', function(assert) {
-    assert.expect(2);
-    var obj = {counter: 0};
-    var context = {};
-    _.extend(obj, Schmackbone.Events);
+  test('binding and trigger with event maps context', () => {
+    var obj = {counter: 0, ...Events},
+        context = {};
 
     obj.on({
       a: function() {
-        assert.strictEqual(this, context, 'defaults `context` to `callback` param');
+        expect(this).toEqual(context);
       }
     }, context).trigger('a');
 
     obj.off().on({
       a: function() {
-        assert.strictEqual(this, context, 'will not override explicit `context` param');
+        expect(this).toEqual(context);
       }
     }, this, context).trigger('a');
   });
 
-  QUnit.test('listenTo and stopListening', function(assert) {
-    assert.expect(1);
-    var a = _.extend({}, Schmackbone.Events);
-    var b = _.extend({}, Schmackbone.Events);
-    a.listenTo(b, 'all', function(){ assert.ok(true); });
+  test('listenTo and stopListening', () => {
+    var a = {...Events},
+        b = {...Events},
+        callback = jest.fn();
+
+    a.listenTo(b, 'all', callback);
     b.trigger('anything');
-    a.listenTo(b, 'all', function(){ assert.ok(false); });
+    expect(callback).toHaveBeenCalledTimes(1);
+    callback.mockClear();
+
+    expect(callback).not.toHaveBeenCalled();
+    a.listenTo(b, 'all', callback);
     a.stopListening();
     b.trigger('anything');
+    expect(callback).not.toHaveBeenCalled();
   });
 
-  QUnit.test('listenTo and stopListening with event maps', function(assert) {
-    assert.expect(4);
-    var a = _.extend({}, Schmackbone.Events);
-    var b = _.extend({}, Schmackbone.Events);
-    var cb = function(){ assert.ok(true); };
-    a.listenTo(b, {event: cb});
+  test('listenTo and stopListening with event maps', () => {
+    var a = {...Events},
+        b = {...Events},
+        callback = jest.fn();
+
+    a.listenTo(b, {event: callback});
     b.trigger('event');
-    a.listenTo(b, {event2: cb});
-    b.on('event2', cb);
-    a.stopListening(b, {event2: cb});
+    expect(callback).toHaveBeenCalledTimes(1);
+
+    a.listenTo(b, {event2: callback});
+    b.on('event2', callback);
+    expect(callback).toHaveBeenCalledTimes(1);
+
+    a.stopListening(b, {event2: callback});
     b.trigger('event event2');
+    expect(callback).toHaveBeenCalledTimes(3);
     a.stopListening();
     b.trigger('event event2');
+    expect(callback).toHaveBeenCalledTimes(4);
   });
 
-  QUnit.test('stopListening with omitted args', function(assert) {
-    assert.expect(2);
-    var a = _.extend({}, Schmackbone.Events);
-    var b = _.extend({}, Schmackbone.Events);
-    var cb = function() { assert.ok(true); };
-    a.listenTo(b, 'event', cb);
-    b.on('event', cb);
-    a.listenTo(b, 'event2', cb);
-    a.stopListening(null, {event: cb});
+  test('stopListening with omitted args', () => {
+    var a = {...Events},
+        b = {...Events},
+        callback = jest.fn();
+
+    a.listenTo(b, 'event', callback);
+    b.on('event', callback);
+    a.listenTo(b, 'event2', callback);
+    a.stopListening(null, {event: callback});
+
     b.trigger('event event2');
+    expect(callback).toHaveBeenCalledTimes(2);
     b.off();
-    a.listenTo(b, 'event event2', cb);
+
+    a.listenTo(b, 'event event2', callback);
     a.stopListening(null, 'event');
     a.stopListening();
     b.trigger('event2');
+    expect(callback).toHaveBeenCalledTimes(2);
   });
 
-  QUnit.test('listenToOnce', function(assert) {
-    assert.expect(2);
+  test('listenToOnce', () => {
     // Same as the previous test, but we use once rather than having to explicitly unbind
-    var obj = {counterA: 0, counterB: 0};
-    _.extend(obj, Schmackbone.Events);
-    var incrA = function(){ obj.counterA += 1; obj.trigger('event'); };
-    var incrB = function(){ obj.counterB += 1; };
+    var obj = {counterA: 0, counterB: 0, ...Events},
+        incrA = function() {
+          obj.counterA += 1;
+          obj.trigger('event');
+        },
+        incrB = () => obj.counterB += 1;
+
     obj.listenToOnce(obj, 'event', incrA);
     obj.listenToOnce(obj, 'event', incrB);
     obj.trigger('event');
-    assert.equal(obj.counterA, 1, 'counterA should have only been incremented once.');
-    assert.equal(obj.counterB, 1, 'counterB should have only been incremented once.');
+
+    expect(obj.counterA).toEqual(1);
+    expect(obj.counterB).toEqual(1);
   });
 
-  QUnit.test('listenToOnce and stopListening', function(assert) {
-    assert.expect(1);
-    var a = _.extend({}, Schmackbone.Events);
-    var b = _.extend({}, Schmackbone.Events);
-    a.listenToOnce(b, 'all', function() { assert.ok(true); });
+  test('listenToOnce and stopListening', () => {
+    var a = {...Events},
+        b = {...Events},
+        callback = jest.fn();
+
+    a.listenToOnce(b, 'all', callback);
     b.trigger('anything');
     b.trigger('anything');
-    a.listenToOnce(b, 'all', function() { assert.ok(false); });
+    expect(callback).toHaveBeenCalledTimes(1);
+    a.listenToOnce(b, 'all', callback);
     a.stopListening();
     b.trigger('anything');
+    expect(callback).toHaveBeenCalledTimes(1);
   });
 
-  QUnit.test('listenTo, listenToOnce and stopListening', function(assert) {
-    assert.expect(1);
-    var a = _.extend({}, Schmackbone.Events);
-    var b = _.extend({}, Schmackbone.Events);
-    a.listenToOnce(b, 'all', function() { assert.ok(true); });
+  test('listenTo, listenToOnce and stopListening', () => {
+    var a = {...Events},
+        b = {...Events},
+        callback = jest.fn();
+
+    a.listenToOnce(b, 'all', callback);
     b.trigger('anything');
     b.trigger('anything');
-    a.listenTo(b, 'all', function() { assert.ok(false); });
+    expect(callback).toHaveBeenCalledTimes(1);
+    a.listenTo(b, 'all', callback);
     a.stopListening();
     b.trigger('anything');
+    expect(callback).toHaveBeenCalledTimes(1);
   });
 
-  QUnit.test('listenTo and stopListening with event maps', function(assert) {
-    assert.expect(1);
-    var a = _.extend({}, Schmackbone.Events);
-    var b = _.extend({}, Schmackbone.Events);
-    a.listenTo(b, {change: function(){ assert.ok(true); }});
+  test('listenTo and stopListening with event maps', () => {
+    var a = {...Events},
+        b = {...Events},
+        callback = jest.fn();
+
+    a.listenTo(b, {change: callback});
     b.trigger('change');
-    a.listenTo(b, {change: function(){ assert.ok(false); }});
+    expect(callback).toHaveBeenCalledTimes(1);
+
+    a.listenTo(b, {change: callback});
     a.stopListening();
     b.trigger('change');
+    expect(callback).toHaveBeenCalledTimes(1);
   });
 
-  QUnit.test('listenTo yourself', function(assert) {
-    assert.expect(1);
-    var e = _.extend({}, Schmackbone.Events);
-    e.listenTo(e, 'foo', function(){ assert.ok(true); });
+  test('listenTo yourself', () => {
+    var e = {...Events},
+        callback = jest.fn();
+
+    e.listenTo(e, 'foo', callback);
     e.trigger('foo');
+    expect(callback).toHaveBeenCalledTimes(1);
   });
 
-  QUnit.test('listenTo yourself cleans yourself up with stopListening', function(assert) {
-    assert.expect(1);
-    var e = _.extend({}, Schmackbone.Events);
-    e.listenTo(e, 'foo', function(){ assert.ok(true); });
+  test('listenTo yourself cleans yourself up with stopListening', () => {
+    var e = {...Events},
+        callback = jest.fn();
+
+    e.listenTo(e, 'foo', callback);
     e.trigger('foo');
+    expect(callback).toHaveBeenCalledTimes(1);
     e.stopListening();
     e.trigger('foo');
+    expect(callback).toHaveBeenCalledTimes(1);
   });
 
-  QUnit.test('stopListening cleans up references', function(assert) {
-    assert.expect(12);
-    var a = _.extend({}, Schmackbone.Events);
-    var b = _.extend({}, Schmackbone.Events);
-    var fn = function() {};
-    b.on('event', fn);
-    a.listenTo(b, 'event', fn).stopListening();
-    assert.equal(_.size(a._listeningTo), 0);
-    assert.equal(_.size(b._events.event), 1);
-    assert.equal(_.size(b._listeners), 0);
-    a.listenTo(b, 'event', fn).stopListening(b);
-    assert.equal(_.size(a._listeningTo), 0);
-    assert.equal(_.size(b._events.event), 1);
-    assert.equal(_.size(b._listeners), 0);
-    a.listenTo(b, 'event', fn).stopListening(b, 'event');
-    assert.equal(_.size(a._listeningTo), 0);
-    assert.equal(_.size(b._events.event), 1);
-    assert.equal(_.size(b._listeners), 0);
-    a.listenTo(b, 'event', fn).stopListening(b, 'event', fn);
-    assert.equal(_.size(a._listeningTo), 0);
-    assert.equal(_.size(b._events.event), 1);
-    assert.equal(_.size(b._listeners), 0);
+  test('stopListening cleans up references', () => {
+    var a = {...Events},
+        b = {...Events},
+        callback = jest.fn();
+
+    b.on('event', callback);
+    a.listenTo(b, 'event', callback).stopListening();
+
+    expect(size(a._listeningTo)).toEqual(0);
+    expect(size(b._events.event)).toEqual(1);
+    expect(size(b._listeners)).toEqual(0);
+    a.listenTo(b, 'event', callback).stopListening(b);
+    expect(size(a._listeningTo)).toEqual(0);
+    expect(size(b._events.event)).toEqual(1);
+    expect(size(b._listeners)).toEqual(0);
+    a.listenTo(b, 'event', callback).stopListening(b, 'event');
+    expect(size(a._listeningTo)).toEqual(0);
+    expect(size(b._events.event)).toEqual(1);
+    expect(size(b._listeners)).toEqual(0);
+    a.listenTo(b, 'event', callback).stopListening(b, 'event', callback);
+    expect(size(a._listeningTo)).toEqual(0);
+    expect(size(b._events.event)).toEqual(1);
+    expect(size(b._listeners)).toEqual(0);
   });
 
-  QUnit.test('stopListening cleans up references from listenToOnce', function(assert) {
-    assert.expect(12);
-    var a = _.extend({}, Schmackbone.Events);
-    var b = _.extend({}, Schmackbone.Events);
-    var fn = function() {};
+  test('stopListening cleans up references from listenToOnce', () => {
+    var a = {...Events},
+        b = {...Events},
+        fn = jest.fn();
+
     b.on('event', fn);
     a.listenToOnce(b, 'event', fn).stopListening();
-    assert.equal(_.size(a._listeningTo), 0);
-    assert.equal(_.size(b._events.event), 1);
-    assert.equal(_.size(b._listeners), 0);
+    expect(size(a._listeningTo)).toEqual(0);
+    expect(size(b._events.event)).toEqual(1);
+    expect(size(b._listeners)).toEqual(0);
     a.listenToOnce(b, 'event', fn).stopListening(b);
-    assert.equal(_.size(a._listeningTo), 0);
-    assert.equal(_.size(b._events.event), 1);
-    assert.equal(_.size(b._listeners), 0);
+    expect(size(a._listeningTo)).toEqual(0);
+    expect(size(b._events.event)).toEqual(1);
+    expect(size(b._listeners)).toEqual(0);
     a.listenToOnce(b, 'event', fn).stopListening(b, 'event');
-    assert.equal(_.size(a._listeningTo), 0);
-    assert.equal(_.size(b._events.event), 1);
-    assert.equal(_.size(b._listeners), 0);
+    expect(size(a._listeningTo)).toEqual(0);
+    expect(size(b._events.event)).toEqual(1);
+    expect(size(b._listeners)).toEqual(0);
     a.listenToOnce(b, 'event', fn).stopListening(b, 'event', fn);
-    assert.equal(_.size(a._listeningTo), 0);
-    assert.equal(_.size(b._events.event), 1);
-    assert.equal(_.size(b._listeners), 0);
+    expect(size(a._listeningTo)).toEqual(0);
+    expect(size(b._events.event)).toEqual(1);
+    expect(size(b._listeners)).toEqual(0);
   });
 
-  QUnit.test('listenTo and off cleaning up references', function(assert) {
-    assert.expect(8);
-    var a = _.extend({}, Schmackbone.Events);
-    var b = _.extend({}, Schmackbone.Events);
-    var fn = function() {};
+  test('listenTo and off cleaning up references', () => {
+    var a = {...Events},
+        b = {...Events},
+        fn = jest.fn();
+
     a.listenTo(b, 'event', fn);
     b.off();
-    assert.equal(_.size(a._listeningTo), 0);
-    assert.equal(_.size(b._listeners), 0);
+    expect(size(a._listeningTo)).toEqual(0);
+    expect(size(b._listeners)).toEqual(0);
     a.listenTo(b, 'event', fn);
     b.off('event');
-    assert.equal(_.size(a._listeningTo), 0);
-    assert.equal(_.size(b._listeners), 0);
+    expect(size(a._listeningTo)).toEqual(0);
+    expect(size(b._listeners)).toEqual(0);
     a.listenTo(b, 'event', fn);
     b.off(null, fn);
-    assert.equal(_.size(a._listeningTo), 0);
-    assert.equal(_.size(b._listeners), 0);
+    expect(size(a._listeningTo)).toEqual(0);
+    expect(size(b._listeners)).toEqual(0);
     a.listenTo(b, 'event', fn);
     b.off(null, null, a);
-    assert.equal(_.size(a._listeningTo), 0);
-    assert.equal(_.size(b._listeners), 0);
+    expect(size(a._listeningTo)).toEqual(0);
+    expect(size(b._listeners)).toEqual(0);
   });
 
-  QUnit.test('listenTo and stopListening cleaning up references', function(assert) {
-    assert.expect(2);
-    var a = _.extend({}, Schmackbone.Events);
-    var b = _.extend({}, Schmackbone.Events);
-    a.listenTo(b, 'all', function(){ assert.ok(true); });
+  test('listenTo and stopListening cleaning up references', () => {
+    var a = {...Events},
+        b = {...Events},
+        callback = jest.fn();
+
+    a.listenTo(b, 'all', callback);
     b.trigger('anything');
-    a.listenTo(b, 'other', function(){ assert.ok(false); });
+    a.listenTo(b, 'other', callback);
     a.stopListening(b, 'other');
     a.stopListening(b, 'all');
-    assert.equal(_.size(a._listeningTo), 0);
+    expect(size(a._listeningTo)).toEqual(0);
   });
 
-  QUnit.test('listenToOnce without context cleans up references after the event has fired', function(assert) {
-    assert.expect(2);
-    var a = _.extend({}, Schmackbone.Events);
-    var b = _.extend({}, Schmackbone.Events);
-    a.listenToOnce(b, 'all', function(){ assert.ok(true); });
+  test('listenToOnce without context cleans up references after the event has fired', () => {
+    var a = {...Events},
+        b = {...Events},
+        callback = jest.fn();
+
+    a.listenToOnce(b, 'all', callback);
     b.trigger('anything');
-    assert.equal(_.size(a._listeningTo), 0);
+    expect(size(a._listeningTo)).toEqual(0);
   });
 
-  QUnit.test('listenToOnce with event maps cleans up references', function(assert) {
-    assert.expect(2);
-    var a = _.extend({}, Schmackbone.Events);
-    var b = _.extend({}, Schmackbone.Events);
+  test('listenToOnce with event maps cleans up references', () => {
+    var a = {...Events},
+        b = {...Events},
+        callback = jest.fn(),
+        callback2 = jest.fn();
+
+    a.listenToOnce(b, {one: callback, two: callback2});
+    b.trigger('one');
+    expect(size(a._listeningTo)).toEqual(1);
+  });
+
+  test('listenToOnce with event maps binds the correct `this`', () => {
+    var a = {...Events},
+        b = {...Events};
+
     a.listenToOnce(b, {
-      one: function() { assert.ok(true); },
-      two: function() { assert.ok(false); }
+      one: function() {
+        expect(this).toEqual(a);
+      },
+      two: function() {}
     });
     b.trigger('one');
-    assert.equal(_.size(a._listeningTo), 1);
   });
 
-  QUnit.test('listenToOnce with event maps binds the correct `this`', function(assert) {
-    assert.expect(1);
-    var a = _.extend({}, Schmackbone.Events);
-    var b = _.extend({}, Schmackbone.Events);
-    a.listenToOnce(b, {
-      one: function() { assert.ok(this === a); },
-      two: function() { assert.ok(false); }
-    });
-    b.trigger('one');
+  test('listenTo with empty callback doesn\'t throw an error', () => {
+    var a = {...Events};
+
+    a.listenTo(a, 'foo', null);
+    a.trigger('foo');
   });
 
-  QUnit.test("listenTo with empty callback doesn't throw an error", function(assert) {
-    assert.expect(1);
-    var e = _.extend({}, Schmackbone.Events);
-    e.listenTo(e, 'foo', null);
-    e.trigger('foo');
-    assert.ok(true);
-  });
+  test('trigger all for each event', () => {
+    var a,
+        b,
+        obj = {counter: 0, ...Events};
 
-  QUnit.test('trigger all for each event', function(assert) {
-    assert.expect(3);
-    var a, b, obj = {counter: 0};
-    _.extend(obj, Schmackbone.Events);
-    obj.on('all', function(event) {
+    obj.on('all', (event) => {
       obj.counter++;
-      if (event === 'a') a = true;
-      if (event === 'b') b = true;
-    })
-      .trigger('a b');
-    assert.ok(a);
-    assert.ok(b);
-    assert.equal(obj.counter, 2);
+
+      if (event === 'a') {
+        a = true;
+      }
+
+      if (event === 'b') {
+        b = true;
+      }
+    }).trigger('a b');
+
+    expect(a).toBe(true);
+    expect(b).toBe(true);
+    expect(obj.counter).toEqual(2);
   });
 
-  QUnit.test('on, then unbind all functions', function(assert) {
-    assert.expect(1);
-    var obj = {counter: 0};
-    _.extend(obj, Schmackbone.Events);
-    var callback = function() { obj.counter += 1; };
+  test('on, then unbind all functions', () => {
+    var obj = {counter: 0, ...Events};
+    var callback = () => obj.counter += 1;
+
     obj.on('event', callback);
     obj.trigger('event');
     obj.off('event');
     obj.trigger('event');
-    assert.equal(obj.counter, 1, 'counter should have only been incremented once.');
+    expect(obj.counter).toEqual(1);
   });
 
-  QUnit.test('bind two callbacks, unbind only one', function(assert) {
-    assert.expect(2);
-    var obj = {counterA: 0, counterB: 0};
-    _.extend(obj, Schmackbone.Events);
-    var callback = function() { obj.counterA += 1; };
+  test('bind two callbacks, unbind only one', () => {
+    var obj = {counterA: 0, counterB: 0, ...Events};
+    var callback = () => obj.counterA += 1;
+
     obj.on('event', callback);
-    obj.on('event', function() { obj.counterB += 1; });
+    obj.on('event', () => obj.counterB += 1);
     obj.trigger('event');
     obj.off('event', callback);
     obj.trigger('event');
-    assert.equal(obj.counterA, 1, 'counterA should have only been incremented once.');
-    assert.equal(obj.counterB, 2, 'counterB should have been incremented twice.');
+    expect(obj.counterA).toEqual(1);
+    expect(obj.counterB).toEqual(2);
   });
 
-  QUnit.test('unbind a callback in the midst of it firing', function(assert) {
-    assert.expect(1);
-    var obj = {counter: 0};
-    _.extend(obj, Schmackbone.Events);
-    var callback = function() {
-      obj.counter += 1;
-      obj.off('event', callback);
-    };
+  test('unbind a callback in the midst of it firing', () => {
+    var obj = {counter: 0, ...Events},
+        callback = () => {
+          obj.counter += 1;
+          obj.off('event', callback);
+        };
+
     obj.on('event', callback);
     obj.trigger('event');
     obj.trigger('event');
     obj.trigger('event');
-    assert.equal(obj.counter, 1, 'the callback should have been unbound.');
+    expect(obj.counter).toEqual(1);
   });
 
-  QUnit.test('two binds that unbind themeselves', function(assert) {
-    assert.expect(2);
-    var obj = {counterA: 0, counterB: 0};
-    _.extend(obj, Schmackbone.Events);
-    var incrA = function(){ obj.counterA += 1; obj.off('event', incrA); };
-    var incrB = function(){ obj.counterB += 1; obj.off('event', incrB); };
+  test('two binds that unbind themeselves', () => {
+    var obj = {counterA: 0, counterB: 0, ...Events},
+        incrA = () => {
+          obj.counterA += 1;
+          obj.off('event', incrA);
+        },
+        incrB = () => {
+          obj.counterB += 1;
+          obj.off('event', incrB);
+        };
+
     obj.on('event', incrA);
     obj.on('event', incrB);
     obj.trigger('event');
     obj.trigger('event');
     obj.trigger('event');
-    assert.equal(obj.counterA, 1, 'counterA should have only been incremented once.');
-    assert.equal(obj.counterB, 1, 'counterB should have only been incremented once.');
+    expect(obj.counterA).toEqual(1);
+    expect(obj.counterB).toEqual(1);
   });
 
-  QUnit.test('bind a callback with a default context when none supplied', function(assert) {
-    assert.expect(1);
-    var obj = _.extend({
+  test('bind a callback with a default context when none supplied', () => {
+    var obj = {
       assertTrue: function() {
-        assert.equal(this, obj, '`this` was bound to the callback');
-      }
-    }, Schmackbone.Events);
+        expect(this).toEqual(obj);
+      },
+      ...Events
+    };
 
     obj.once('event', obj.assertTrue);
     obj.trigger('event');
   });
 
-  QUnit.test('bind a callback with a supplied context', function(assert) {
-    assert.expect(1);
-    var TestClass = function() {
-      return this;
-    };
-    TestClass.prototype.assertTrue = function() {
-      assert.ok(true, '`this` was bound to the callback');
-    };
+  test('bind a callback with a supplied context', () => {
+    var obj = {...Events},
+        TestClass = function() {
+          return this;
+        };
 
-    var obj = _.extend({}, Schmackbone.Events);
-    obj.on('event', function() { this.assertTrue(); }, new TestClass);
+    TestClass.prototype.assertTrue = jest.fn();
+
+    obj.on('event', function() {
+      this.assertTrue();
+    }, new TestClass);
     obj.trigger('event');
+    expect(TestClass.prototype.assertTrue).toHaveBeenCalled();
   });
 
-  QUnit.test('nested trigger with unbind', function(assert) {
-    assert.expect(1);
-    var obj = {counter: 0};
-    _.extend(obj, Schmackbone.Events);
-    var incr1 = function(){ obj.counter += 1; obj.off('event', incr1); obj.trigger('event'); };
-    var incr2 = function(){ obj.counter += 1; };
+  test('nested trigger with unbind', () => {
+    var obj = {counter: 0, ...Events},
+        incr1 = function() {
+          obj.counter += 1;
+          obj.off('event', incr1);
+          obj.trigger('event');
+        },
+        incr2 = () => obj.counter += 1;
+
     obj.on('event', incr1);
     obj.on('event', incr2);
     obj.trigger('event');
-    assert.equal(obj.counter, 3, 'counter should have been incremented three times');
+    expect(obj.counter).toEqual(3);
   });
 
-  QUnit.test('callback list is not altered during trigger', function(assert) {
-    assert.expect(2);
-    var counter = 0, obj = _.extend({}, Schmackbone.Events);
-    var incr = function(){ counter++; };
-    var incrOn = function(){ obj.on('event all', incr); };
-    var incrOff = function(){ obj.off('event all', incr); };
+  test('callback list is not altered during trigger', () => {
+    var counter = 0,
+        obj = {...Events},
+        incr = () => counter++,
+        incrOn = () => obj.on('event all', incr),
+        incrOff = () => obj.off('event all', incr);
 
     obj.on('event all', incrOn).trigger('event');
-    assert.equal(counter, 0, 'on does not alter callback list');
+    expect(counter).toEqual(0);
 
     obj.off().on('event', incrOff).on('event all', incr).trigger('event');
-    assert.equal(counter, 2, 'off does not alter callback list');
+    expect(counter).toEqual(2);
   });
 
-  QUnit.test("#1282 - 'all' callback list is retrieved after each event.", function(assert) {
-    assert.expect(1);
-    var counter = 0;
-    var obj = _.extend({}, Schmackbone.Events);
-    var incr = function(){ counter++; };
-    obj.on('x', function() {
-      obj.on('y', incr).on('all', incr);
-    })
-      .trigger('x y');
-    assert.strictEqual(counter, 2);
+  test('#1282 - \'all\' callback list is retrieved after each event.', () => {
+    var counter = 0,
+        obj = {...Events},
+        incr = () => counter++;
+
+    obj.on('x', () => obj.on('y', incr).on('all', incr))
+        .trigger('x y');
+    expect(counter).toEqual(2);
   });
 
-  QUnit.test('if no callback is provided, `on` is a noop', function(assert) {
-    assert.expect(0);
-    _.extend({}, Schmackbone.Events).on('test').trigger('test');
+  test('if no callback is provided, `on` is a noop', () => {
+    var obj = {...Events};
+
+    obj.on('test').trigger('test');
   });
 
-  QUnit.test('if callback is truthy but not a function, `on` should throw an error just like jQuery', function(assert) {
-    assert.expect(1);
-    var view = _.extend({}, Schmackbone.Events).on('test', 'noop');
-    assert.raises(function() {
-      view.trigger('test');
+  test('if callback is truthy but not a function, `on` should throw an error just like jQuery',
+    () => {
+      var view = {...Events};
+
+      view.on('test', 'noop');
+
+      expect(() => view.trigger('test')).toThrow();
     });
-  });
 
-  QUnit.test('remove all events for a specific context', function(assert) {
-    assert.expect(4);
-    var obj = _.extend({}, Schmackbone.Events);
-    obj.on('x y all', function() { assert.ok(true); });
-    obj.on('x y all', function() { assert.ok(false); }, obj);
+  test('remove all events for a specific context', () => {
+    var obj = {...Events},
+        success = jest.fn(),
+        fail = jest.fn();
+
+    obj.on('x y all', success);
+    obj.on('x y all', fail, obj);
     obj.off(null, null, obj);
     obj.trigger('x y');
+
+    expect(success).toHaveBeenCalledTimes(4);
+    expect(fail).not.toHaveBeenCalled();
   });
 
-  QUnit.test('remove all events for a specific callback', function(assert) {
-    assert.expect(4);
-    var obj = _.extend({}, Schmackbone.Events);
-    var success = function() { assert.ok(true); };
-    var fail = function() { assert.ok(false); };
+  test('remove all events for a specific callback', () => {
+    var obj = {...Events},
+        success = jest.fn(),
+        fail = jest.fn();
+
     obj.on('x y all', success);
     obj.on('x y all', fail);
     obj.off(null, fail);
     obj.trigger('x y');
+    expect(success).toHaveBeenCalledTimes(4);
+    expect(fail).not.toHaveBeenCalled();
   });
 
-  QUnit.test('#1310 - off does not skip consecutive events', function(assert) {
-    assert.expect(0);
-    var obj = _.extend({}, Schmackbone.Events);
-    obj.on('event', function() { assert.ok(false); }, obj);
-    obj.on('event', function() { assert.ok(false); }, obj);
+  test('#1310 - off does not skip consecutive events', () => {
+    var obj = {...Events},
+        callback = jest.fn();
+
+    obj.on('event', callback, obj);
+    obj.on('event', callback, obj);
     obj.off(null, null, obj);
     obj.trigger('event');
+    expect(callback).not.toHaveBeenCalled();
   });
 
-  QUnit.test('once', function(assert) {
-    assert.expect(2);
+  test('once', () => {
     // Same as the previous test, but we use once rather than having to explicitly unbind
-    var obj = {counterA: 0, counterB: 0};
-    _.extend(obj, Schmackbone.Events);
-    var incrA = function(){ obj.counterA += 1; obj.trigger('event'); };
-    var incrB = function(){ obj.counterB += 1; };
+    var obj = {counterA: 0, counterB: 0, ...Events},
+        incrA = () => {
+          obj.counterA += 1;
+          obj.trigger('event');
+        },
+        incrB = () => obj.counterB += 1;
+
     obj.once('event', incrA);
     obj.once('event', incrB);
     obj.trigger('event');
-    assert.equal(obj.counterA, 1, 'counterA should have only been incremented once.');
-    assert.equal(obj.counterB, 1, 'counterB should have only been incremented once.');
+    expect(obj.counterA).toEqual(1);
+    expect(obj.counterB).toEqual(1);
   });
 
-  QUnit.test('once variant one', function(assert) {
-    assert.expect(3);
-    var f = function(){ assert.ok(true); };
+  test('once variant one', () => {
+    var a = {...Events},
+        b = {...Events},
+        fn = jest.fn();
 
-    var a = _.extend({}, Schmackbone.Events).once('event', f);
-    var b = _.extend({}, Schmackbone.Events).on('event', f);
+    a.once('event', fn);
+    b.on('event', fn);
 
     a.trigger('event');
-
+    expect(fn).toHaveBeenCalledTimes(1);
     b.trigger('event');
+    expect(fn).toHaveBeenCalledTimes(2);
     b.trigger('event');
+    expect(fn).toHaveBeenCalledTimes(3);
   });
 
-  QUnit.test('once variant two', function(assert) {
-    assert.expect(3);
-    var f = function(){ assert.ok(true); };
-    var obj = _.extend({}, Schmackbone.Events);
+  test('once variant two', () => {
+    var obj = {...Events},
+        fn = jest.fn();
 
-    obj
-      .once('event', f)
-      .on('event', f)
-      .trigger('event')
-      .trigger('event');
+    obj.once('event', fn)
+        .on('event', fn)
+        .trigger('event')
+        .trigger('event');
+
+    expect(fn).toHaveBeenCalledTimes(3);
   });
 
-  QUnit.test('once with off', function(assert) {
-    assert.expect(0);
-    var f = function(){ assert.ok(true); };
-    var obj = _.extend({}, Schmackbone.Events);
+  test('once with off', () => {
+    var obj = {...Events},
+        fn = jest.fn();
 
-    obj.once('event', f);
-    obj.off('event', f);
+    obj.once('event', fn);
+    obj.off('event', fn);
     obj.trigger('event');
+
+    expect(fn).not.toHaveBeenCalled();
   });
 
-  QUnit.test('once with event maps', function(assert) {
-    var obj = {counter: 0};
-    _.extend(obj, Schmackbone.Events);
-
-    var increment = function() {
-      this.counter += 1;
-    };
+  test('once with event maps', () => {
+    var obj = {counter: 0, ...Events},
+        increment = function() {
+          this.counter += 1;
+        };
 
     obj.once({
       a: increment,
@@ -584,158 +638,148 @@ describe('Schmackbone.Events', () => {
     }, obj);
 
     obj.trigger('a');
-    assert.equal(obj.counter, 1);
+    expect(obj.counter).toEqual(1);
 
     obj.trigger('a b');
-    assert.equal(obj.counter, 2);
+    expect(obj.counter).toEqual(2);
 
     obj.trigger('c');
-    assert.equal(obj.counter, 3);
+    expect(obj.counter).toEqual(3);
 
     obj.trigger('a b c');
-    assert.equal(obj.counter, 3);
+    expect(obj.counter).toEqual(3);
   });
 
-  QUnit.test('bind a callback with a supplied context using once with object notation', function(assert) {
-    assert.expect(1);
-    var obj = {counter: 0};
-    var context = {};
-    _.extend(obj, Schmackbone.Events);
+  test('bind a callback with a supplied context using once with object notation', () => {
+    var obj = {counter: 0, ...Events},
+        context = {};
 
     obj.once({
       a: function() {
-        assert.strictEqual(this, context, 'defaults `context` to `callback` param');
+        expect(this).toEqual(context);
       }
     }, context).trigger('a');
   });
 
-  QUnit.test('once with off only by context', function(assert) {
-    assert.expect(0);
-    var context = {};
-    var obj = _.extend({}, Schmackbone.Events);
-    obj.once('event', function(){ assert.ok(false); }, context);
+  test('once with off only by context', () => {
+    var context = {},
+        obj = {...Events},
+        fn = jest.fn();
+
+    obj.once('event', fn, context);
     obj.off(null, null, context);
     obj.trigger('event');
+    expect(fn).not.toHaveBeenCalled();
   });
 
-  QUnit.test('Schmackbone object inherits Events', function(assert) {
-    assert.ok(Schmackbone.on === Schmackbone.Events.on);
-  });
+  test('once with multiple events.', () => {
+    var obj = {...Events},
+        fn = jest.fn();
 
-  QUnit.test('once with asynchronous events', function(assert) {
-    var done = assert.async();
-    assert.expect(1);
-    var func = _.debounce(function() { assert.ok(true); done(); }, 50);
-    var obj = _.extend({}, Schmackbone.Events).once('async', func);
-
-    obj.trigger('async');
-    obj.trigger('async');
-  });
-
-  QUnit.test('once with multiple events.', function(assert) {
-    assert.expect(2);
-    var obj = _.extend({}, Schmackbone.Events);
-    obj.once('x y', function() { assert.ok(true); });
+    obj.once('x y', fn);
     obj.trigger('x y');
+    expect(fn).toHaveBeenCalledTimes(2);
   });
 
-  QUnit.test('Off during iteration with once.', function(assert) {
-    assert.expect(2);
-    var obj = _.extend({}, Schmackbone.Events);
-    var f = function(){ this.off('event', f); };
-    obj.on('event', f);
-    obj.once('event', function(){});
-    obj.on('event', function(){ assert.ok(true); });
+  test('Off during iteration with once.', () => {
+    var obj = {...Events},
+        fn = function() {
+          this.off('event', fn);
+        },
+        callback = jest.fn();
+
+    obj.on('event', fn);
+    obj.once('event', () => {});
+    obj.on('event', callback);
 
     obj.trigger('event');
     obj.trigger('event');
+    expect(callback).toHaveBeenCalledTimes(2);
   });
 
-  QUnit.test('`once` on `all` should work as expected', function(assert) {
-    assert.expect(1);
-    Schmackbone.once('all', function() {
-      assert.ok(true);
-      Schmackbone.trigger('all');
-    });
-    Schmackbone.trigger('all');
+  test('once without a callback is a noop', () => {
+    var obj = {...Events};
+
+    obj.once('event').trigger('event');
   });
 
-  QUnit.test('once without a callback is a noop', function(assert) {
-    assert.expect(0);
-    _.extend({}, Schmackbone.Events).once('event').trigger('event');
-  });
+  test('listenToOnce without a callback is a noop', () => {
+    var obj = {...Events};
 
-  QUnit.test('listenToOnce without a callback is a noop', function(assert) {
-    assert.expect(0);
-    var obj = _.extend({}, Schmackbone.Events);
     obj.listenToOnce(obj, 'event').trigger('event');
   });
 
-  QUnit.test('event functions are chainable', function(assert) {
-    var obj = _.extend({}, Schmackbone.Events);
-    var obj2 = _.extend({}, Schmackbone.Events);
-    var fn = function() {};
-    assert.equal(obj, obj.trigger('noeventssetyet'));
-    assert.equal(obj, obj.off('noeventssetyet'));
-    assert.equal(obj, obj.stopListening('noeventssetyet'));
-    assert.equal(obj, obj.on('a', fn));
-    assert.equal(obj, obj.once('c', fn));
-    assert.equal(obj, obj.trigger('a'));
-    assert.equal(obj, obj.listenTo(obj2, 'a', fn));
-    assert.equal(obj, obj.listenToOnce(obj2, 'b', fn));
-    assert.equal(obj, obj.off('a c'));
-    assert.equal(obj, obj.stopListening(obj2, 'a'));
-    assert.equal(obj, obj.stopListening());
+  test('event functions are chainable', () => {
+    var obj = {...Events},
+        obj2 = {...Events},
+        fn = function() {};
+
+    expect(obj).toEqual(obj.trigger('noeventssetyet'));
+    expect(obj).toEqual(obj.off('noeventssetyet'));
+    expect(obj).toEqual(obj.stopListening('noeventssetyet'));
+    expect(obj).toEqual(obj.on('a', fn));
+    expect(obj).toEqual(obj.once('c', fn));
+    expect(obj).toEqual(obj.trigger('a'));
+    expect(obj).toEqual(obj.listenTo(obj2, 'a', fn));
+    expect(obj).toEqual(obj.listenToOnce(obj2, 'b', fn));
+    expect(obj).toEqual(obj.off('a c'));
+    expect(obj).toEqual(obj.stopListening(obj2, 'a'));
+    expect(obj).toEqual(obj.stopListening());
   });
 
-  QUnit.test('#3448 - listenToOnce with space-separated events', function(assert) {
-    assert.expect(2);
-    var one = _.extend({}, Schmackbone.Events);
-    var two = _.extend({}, Schmackbone.Events);
-    var count = 1;
-    one.listenToOnce(two, 'x y', function(n) { assert.ok(n === count++); });
+  test('#3448 - listenToOnce with space-separated events', () => {
+    var one = {...Events},
+        two = {...Events},
+        count = 1;
+
+    one.listenToOnce(two, 'x y', (n) => expect(n).toEqual(count++));
     two.trigger('x', 1);
     two.trigger('x', 1);
     two.trigger('y', 2);
     two.trigger('y', 2);
   });
 
-  QUnit.test('#3611 - listenTo is compatible with non-Schmackbone event libraries', function(assert) {
-    var obj = _.extend({}, Schmackbone.Events);
-    var other = {
-      events: {},
-      on: function(name, callback) {
-        this.events[name] = callback;
-      },
-      trigger: function(name) {
-        this.events[name]();
-      }
-    };
+  test('#3611 - listenTo is compatible with non-Schmackbone event libraries', () => {
+    var obj = {...Events},
+        cb = jest.fn(),
+        other = {
+          events: {},
+          on: function(name, callback) {
+            this.events[name] = callback;
+          },
+          trigger: function(name) {
+            this.events[name]();
+          }
+        };
 
-    obj.listenTo(other, 'test', function() { assert.ok(true); });
+    obj.listenTo(other, 'test', cb);
     other.trigger('test');
+    expect(cb).toHaveBeenCalled();
   });
 
-  QUnit.test('#3611 - stopListening is compatible with non-Schmackbone event libraries', function(assert) {
-    var obj = _.extend({}, Schmackbone.Events);
-    var other = {
-      events: {},
-      on: function(name, callback) {
-        this.events[name] = callback;
-      },
-      off: function() {
-        this.events = {};
-      },
-      trigger: function(name) {
-        var fn = this.events[name];
-        if (fn) fn();
-      }
-    };
+  test('#3611 - stopListening is compatible with non-Schmackbone event libraries', () => {
+    var obj = {...Events},
+        cb = jest.fn(),
+        other = {
+          events: {},
+          on: function(name, callback) {
+            this.events[name] = callback;
+          },
+          off: function() {
+            this.events = {};
+          },
+          trigger: function(name) {
+            var fn = this.events[name];
 
-    obj.listenTo(other, 'test', function() { assert.ok(false); });
+            if (fn) {
+              fn();
+            }
+          }
+        };
+
+    obj.listenTo(other, 'test', cb);
     obj.stopListening(other);
     other.trigger('test');
-    assert.equal(_.size(obj._listeningTo), 0);
+    expect(size(obj._listeningTo)).toEqual(0);
   });
-  */
 });
