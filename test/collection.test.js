@@ -22,7 +22,13 @@ describe('Schmackbone.Collection', () => {
   });
 
   test('new and sort', () => {
-    var counter = 0;
+    var counter = 0,
+        sortedCol;
+
+    // test using static property for comparator
+    class _Collection extends Collection {
+      static comparator = (model) => model.id
+    }
 
     col.on('sort', () => counter++);
     expect(col.pluck('label')).toEqual(['a', 'b', 'c', 'd']);
@@ -38,11 +44,22 @@ describe('Schmackbone.Collection', () => {
 
     expect(counter).toEqual(2);
     expect(col.pluck('label')).toEqual(['d', 'c', 'b', 'a']);
+
+    sortedCol = new _Collection([a, b, c, d]);
+    expect(sortedCol.pluck('label')).toEqual(['d', 'c', 'b', 'a']);
   });
 
   test('String comparator', () => {
     var collection = new Collection([{id: 3}, {id: 1}, {id: 2}], {comparator: 'id'});
 
+    // test using static property for comparator
+    class _Collection extends Collection {
+      static comparator = 'id'
+    }
+
+    expect(collection.pluck('id')).toEqual([1, 2, 3]);
+
+    collection = new _Collection([{id: 3}, {id: 1}, {id: 2}]);
     expect(collection.pluck('id')).toEqual([1, 2, 3]);
   });
 
@@ -77,6 +94,27 @@ describe('Schmackbone.Collection', () => {
     expect(collection.comparator).toEqual(comparator);
   });
 
+  test('clone preserves static model', () => {
+    var collection;
+
+    class _Model extends Model {}
+    class _Model2 extends Model {}
+    class _Collection extends Collection {
+      static model = _Model
+    }
+
+    collection = new Collection([{id: 1}]).clone();
+    expect(collection.at(0)).toBeInstanceOf(Model);
+
+    collection = new _Collection([{id: 1}]).clone();
+    collection.add({id: 2});
+    expect(collection.at(0)).toBeInstanceOf(_Model);
+    expect(collection.at(1)).toBeInstanceOf(_Model);
+
+    collection = new Collection([{id: 1}], {model: _Model2}).clone();
+    expect(collection.at(0)).toBeInstanceOf(_Model2);
+  });
+
   test('get', () => {
     expect(col.get(0)).toEqual(d);
     expect(col.get(d.clone())).toEqual(d);
@@ -91,9 +129,7 @@ describe('Schmackbone.Collection', () => {
         collection;
 
     class MongoModel extends Model {
-      get idAttribute() {
-        return '_id';
-      }
+      static idAttribute = '_id'
     }
 
     model = new MongoModel({_id: 100});
