@@ -1,4 +1,4 @@
-import History, {history} from '../lib/history';
+import {history} from '../lib/history';
 import Router from '../lib/router';
 
 var router = null;
@@ -184,7 +184,7 @@ describe('Schmackbone.Router', () => {
   });
 
   /*
-  QUnit.test('routes (simple, but unicode)', function(assert) {
+  test('routes (simple, but unicode)', () => {
     assert.expect(4);
     location.replace('http://example.com#search/тест');
     Schmackbone.history.checkUrl();
@@ -194,7 +194,7 @@ describe('Schmackbone.Router', () => {
     assert.equal(lastArgs[0], 'тест');
   });
 
-  QUnit.test('routes (two part)', function(assert) {
+  test('routes (two part)', () => {
     assert.expect(2);
     location.replace('http://example.com#search/nyc/p10');
     Schmackbone.history.checkUrl();
@@ -202,32 +202,32 @@ describe('Schmackbone.Router', () => {
     assert.equal(router.page, '10');
   });
 
-  QUnit.test('routes via navigate', function(assert) {
+  test('routes via navigate', () => {
     assert.expect(2);
     Schmackbone.history.navigate('search/manhattan/p20', {trigger: true});
     assert.equal(router.query, 'manhattan');
     assert.equal(router.page, '20');
   });
 
-  QUnit.test('routes via navigate with params', function(assert) {
+  test('routes via navigate with params', () => {
     assert.expect(1);
     Schmackbone.history.navigate('query/test?a=b', {trigger: true});
     assert.equal(router.queryArgs, 'a=b');
   });
 
-  QUnit.test('routes via navigate for backwards-compatibility', function(assert) {
+  test('routes via navigate for backwards-compatibility', () => {
     assert.expect(2);
     Schmackbone.history.navigate('search/manhattan/p20', true);
     assert.equal(router.query, 'manhattan');
     assert.equal(router.page, '20');
   });
 
-  QUnit.test('reports matched route via nagivate', function(assert) {
+  test('reports matched route via nagivate', () => {
     assert.expect(1);
     assert.ok(Schmackbone.history.navigate('search/manhattan/p20', true));
   });
 
-  QUnit.test('route precedence via navigate', function(assert) {
+  test('route precedence via navigate', () => {
     assert.expect(6);
 
     // Check both 0.9.x and backwards-compatibility options
@@ -241,7 +241,7 @@ describe('Schmackbone.Router', () => {
     });
   });
 
-  QUnit.test('loadUrl is not called for identical routes.', function(assert) {
+  test('loadUrl is not called for identical routes.', () => {
     assert.expect(0);
     Schmackbone.history.loadUrl = function() { assert.ok(false); };
     location.replace('http://example.com#route');
@@ -250,14 +250,14 @@ describe('Schmackbone.Router', () => {
     Schmackbone.history.navigate('/route');
   });
 
-  QUnit.test('use implicit callback if none provided', function(assert) {
+  test('use implicit callback if none provided', () => {
     assert.expect(1);
     router.count = 0;
     router.navigate('implicit', {trigger: true});
     assert.equal(router.count, 1);
   });
 
-  QUnit.test('routes via navigate with {replace: true}', function(assert) {
+  test('routes via navigate with {replace: true}', () => {
     assert.expect(1);
     location.replace('http://example.com#start_here');
     Schmackbone.history.checkUrl();
@@ -267,14 +267,14 @@ describe('Schmackbone.Router', () => {
     Schmackbone.history.navigate('end_here', {replace: true});
   });
 
-  QUnit.test('routes (splats)', function(assert) {
+  test('routes (splats)', () => {
     assert.expect(1);
     location.replace('http://example.com#splat/long-list/of/splatted_99args/end');
     Schmackbone.history.checkUrl();
     assert.equal(router.args, 'long-list/of/splatted_99args');
   });
 
-  QUnit.test('routes (github)', function(assert) {
+  test('routes (github)', () => {
     assert.expect(3);
     location.replace('http://example.com#backbone/compare/1.0...braddunbar:with/slash');
     Schmackbone.history.checkUrl();
@@ -283,7 +283,7 @@ describe('Schmackbone.Router', () => {
     assert.equal(router.to, 'braddunbar:with/slash');
   });
 
-  QUnit.test('routes (optional)', function(assert) {
+  test('routes (optional)', () => {
     assert.expect(2);
     location.replace('http://example.com#optional');
     Schmackbone.history.checkUrl();
@@ -293,7 +293,7 @@ describe('Schmackbone.Router', () => {
     assert.equal(router.arg, 'thing');
   });
 
-  QUnit.test('routes (complex)', function(assert) {
+  test('routes (complex)', () => {
     assert.expect(3);
     location.replace('http://example.com#one/two/three/complex-part/four/five/six/seven');
     Schmackbone.history.checkUrl();
@@ -302,7 +302,7 @@ describe('Schmackbone.Router', () => {
     assert.equal(router.rest, 'four/five/six/seven');
   });
 
-  QUnit.test('routes (query)', function(assert) {
+  test('routes (query)', () => {
     assert.expect(5);
     location.replace('http://example.com#query/mandel?a=b&c=d');
     Schmackbone.history.checkUrl();
@@ -313,14 +313,14 @@ describe('Schmackbone.Router', () => {
     assert.equal(lastArgs[1], 'a=b&c=d');
   });
 
-  QUnit.test('routes (anything)', function(assert) {
+  test('routes (anything)', () => {
     assert.expect(1);
     location.replace('http://example.com#doesnt-match-a-route');
     Schmackbone.history.checkUrl();
     assert.equal(router.anything, 'doesnt-match-a-route');
   });
 
-  QUnit.test('routes (function)', function(assert) {
+  test('routes (function)', () => {
     assert.expect(3);
     router.on('route', function(name) {
       assert.ok(name === '');
@@ -331,7 +331,7 @@ describe('Schmackbone.Router', () => {
     assert.equal(ExternalObject.value, 'set');
   });
 
-  QUnit.test('Decode named parameters, not splats.', function(assert) {
+  test('Decode named parameters, not splats.', () => {
     assert.expect(2);
     location.replace('http://example.com#decode/a%2Fb/c%2Fd/e');
     Schmackbone.history.checkUrl();
@@ -339,14 +339,14 @@ describe('Schmackbone.Router', () => {
     assert.strictEqual(router.path, 'c/d/e');
   });
 
-  QUnit.test('fires event when router doesn\'t have callback on it', function(assert) {
+  test('fires event when router doesn\'t have callback on it', () => {
     assert.expect(1);
     router.on('route:noCallback', function() { assert.ok(true); });
     location.replace('http://example.com#noCallback');
     Schmackbone.history.checkUrl();
   });
 
-  QUnit.test('No events are triggered if #execute returns false.', function(assert) {
+  test('No events are triggered if #execute returns false.', () => {
     assert.expect(1);
     var MyRouter = Schmackbone.Router.extend({
 
@@ -377,7 +377,7 @@ describe('Schmackbone.Router', () => {
     Schmackbone.history.checkUrl();
   });
 
-  QUnit.test('#933, #908 - leading slash', function(assert) {
+  test('#933, #908 - leading slash', () => {
     assert.expect(2);
     location.replace('http://example.com/root/foo');
 
@@ -392,7 +392,7 @@ describe('Schmackbone.Router', () => {
     assert.strictEqual(Schmackbone.history.getFragment(), 'foo');
   });
 
-  QUnit.test('#967 - Route callback gets passed encoded values.', function(assert) {
+  test('#967 - Route callback gets passed encoded values.', () => {
     assert.expect(3);
     var route = 'has%2Fslash/complex-has%23hash/has%20space';
     Schmackbone.history.navigate(route, {trigger: true});
@@ -401,7 +401,7 @@ describe('Schmackbone.Router', () => {
     assert.strictEqual(router.rest, 'has space');
   });
 
-  QUnit.test('correctly handles URLs with % (#868)', function(assert) {
+  test('correctly handles URLs with % (#868)', () => {
     assert.expect(3);
     location.replace('http://example.com#search/fat%3A1.5%25');
     Schmackbone.history.checkUrl();
@@ -412,7 +412,7 @@ describe('Schmackbone.Router', () => {
     assert.equal(lastRoute, 'search');
   });
 
-  QUnit.test('#2666 - Hashes with UTF8 in them.', function(assert) {
+  test('#2666 - Hashes with UTF8 in them.', () => {
     assert.expect(2);
     Schmackbone.history.navigate('charñ', {trigger: true});
     assert.equal(router.charType, 'UTF');
@@ -420,7 +420,7 @@ describe('Schmackbone.Router', () => {
     assert.equal(router.charType, 'UTF');
   });
 
-  QUnit.test('#1185 - Use pathname when hashChange is not wanted.', function(assert) {
+  test('#1185 - Use pathname when hashChange is not wanted.', () => {
     assert.expect(1);
     Schmackbone.history.stop();
     location.replace('http://example.com/path/name#hash');
@@ -430,7 +430,7 @@ describe('Schmackbone.Router', () => {
     assert.strictEqual(fragment, location.pathname.replace(/^\//, ''));
   });
 
-  QUnit.test('#1206 - Strip leading slash before location.assign.', function(assert) {
+  test('#1206 - Strip leading slash before location.assign.', () => {
     assert.expect(1);
     Schmackbone.history.stop();
     location.replace('http://example.com/root/');
@@ -442,7 +442,7 @@ describe('Schmackbone.Router', () => {
     Schmackbone.history.navigate('/fragment');
   });
 
-  QUnit.test('#1387 - Root fragment without trailing slash.', function(assert) {
+  test('#1387 - Root fragment without trailing slash.', () => {
     assert.expect(1);
     Schmackbone.history.stop();
     location.replace('http://example.com/root');
@@ -451,7 +451,7 @@ describe('Schmackbone.Router', () => {
     assert.strictEqual(Schmackbone.history.getFragment(), '');
   });
 
-  QUnit.test('#1366 - History does not prepend root to fragment.', function(assert) {
+  test('#1366 - History does not prepend root to fragment.', () => {
     assert.expect(2);
     Schmackbone.history.stop();
     location.replace('http://example.com/root/');
@@ -472,7 +472,7 @@ describe('Schmackbone.Router', () => {
     assert.strictEqual(Schmackbone.history.fragment, 'x');
   });
 
-  QUnit.test('Normalize root.', function(assert) {
+  test('Normalize root.', () => {
     assert.expect(1);
     Schmackbone.history.stop();
     location.replace('http://example.com/root');
@@ -492,7 +492,7 @@ describe('Schmackbone.Router', () => {
     Schmackbone.history.navigate('fragment');
   });
 
-  QUnit.test('Normalize root.', function(assert) {
+  test('Normalize root.', () => {
     assert.expect(1);
     Schmackbone.history.stop();
     location.replace('http://example.com/root#fragment');
@@ -511,7 +511,7 @@ describe('Schmackbone.Router', () => {
     });
   });
 
-  QUnit.test('Normalize root.', function(assert) {
+  test('Normalize root.', () => {
     assert.expect(1);
     Schmackbone.history.stop();
     location.replace('http://example.com/root');
@@ -523,7 +523,7 @@ describe('Schmackbone.Router', () => {
     });
   });
 
-  QUnit.test('Normalize root - leading slash.', function(assert) {
+  test('Normalize root - leading slash.', () => {
     assert.expect(1);
     Schmackbone.history.stop();
     location.replace('http://example.com/root');
@@ -538,7 +538,7 @@ describe('Schmackbone.Router', () => {
     assert.strictEqual(Schmackbone.history.root, '/root/');
   });
 
-  QUnit.test('Transition from hashChange to pushState.', function(assert) {
+  test('Transition from hashChange to pushState.', () => {
     assert.expect(1);
     Schmackbone.history.stop();
     location.replace('http://example.com/root#x/y');
@@ -557,7 +557,7 @@ describe('Schmackbone.Router', () => {
     });
   });
 
-  QUnit.test('#1619: Router: Normalize empty root', function(assert) {
+  test('#1619: Router: Normalize empty root', () => {
     assert.expect(1);
     Schmackbone.history.stop();
     location.replace('http://example.com/');
@@ -572,7 +572,7 @@ describe('Schmackbone.Router', () => {
     assert.strictEqual(Schmackbone.history.root, '/');
   });
 
-  QUnit.test('#1619: Router: nagivate with empty root', function(assert) {
+  test('#1619: Router: nagivate with empty root', () => {
     assert.expect(1);
     Schmackbone.history.stop();
     location.replace('http://example.com/');
@@ -592,7 +592,7 @@ describe('Schmackbone.Router', () => {
     Schmackbone.history.navigate('fragment');
   });
 
-  QUnit.test('Transition from pushState to hashChange.', function(assert) {
+  test('Transition from pushState to hashChange.', () => {
     assert.expect(1);
     Schmackbone.history.stop();
     location.replace('http://example.com/root/x/y?a=b');
@@ -612,7 +612,7 @@ describe('Schmackbone.Router', () => {
     });
   });
 
-  QUnit.test('#1695 - hashChange to pushState with search.', function(assert) {
+  test('#1695 - hashChange to pushState with search.', () => {
     assert.expect(1);
     Schmackbone.history.stop();
     location.replace('http://example.com/root#x/y?a=b');
@@ -631,7 +631,7 @@ describe('Schmackbone.Router', () => {
     });
   });
 
-  QUnit.test('#1746 - Router allows empty route.', function(assert) {
+  test('#1746 - Router allows empty route.', () => {
     assert.expect(1);
     var MyRouter = Schmackbone.Router.extend({
       routes: {'': 'empty'},
@@ -643,19 +643,19 @@ describe('Schmackbone.Router', () => {
     new MyRouter;
   });
 
-  QUnit.test('#1794 - Trailing space in fragments.', function(assert) {
+  test('#1794 - Trailing space in fragments.', () => {
     assert.expect(1);
     var history = new Schmackbone.History;
     assert.strictEqual(history.getFragment('fragment   '), 'fragment');
   });
 
-  QUnit.test('#1820 - Leading slash and trailing space.', function(assert) {
+  test('#1820 - Leading slash and trailing space.', () => {
     assert.expect(1);
     var history = new Schmackbone.History;
     assert.strictEqual(history.getFragment('/fragment '), 'fragment');
   });
 
-  QUnit.test('#1980 - Optional parameters.', function(assert) {
+  test('#1980 - Optional parameters.', () => {
     assert.expect(2);
     location.replace('http://example.com#named/optional/y');
     Schmackbone.history.checkUrl();
@@ -665,7 +665,7 @@ describe('Schmackbone.Router', () => {
     assert.strictEqual(router.z, '123');
   });
 
-  QUnit.test('#2062 - Trigger "route" event on router instance.', function(assert) {
+  test('#2062 - Trigger "route" event on router instance.', () => {
     assert.expect(2);
     router.on('route', function(name, args) {
       assert.strictEqual(name, 'routeEvent');
@@ -675,7 +675,7 @@ describe('Schmackbone.Router', () => {
     Schmackbone.history.checkUrl();
   });
 
-  QUnit.test('#2255 - Extend routes by making routes a function.', function(assert) {
+  test('#2255 - Extend routes by making routes a function.', () => {
     assert.expect(1);
     var RouterBase = Schmackbone.Router.extend({
       routes: function() {
@@ -694,10 +694,15 @@ describe('Schmackbone.Router', () => {
     });
 
     var myRouter = new RouterExtended();
-    assert.deepEqual({home: 'root', index: 'index.html', show: 'show', search: 'search'}, myRouter.routes);
+    expect({
+      home: 'root',
+      index: 'index.html',
+      show: 'show',
+      search: 'search'
+    }).toEqual(myRouter.routes);
   });
 
-  QUnit.test('#2538 - hashChange to pushState only if both requested.', function(assert) {
+  test('#2538 - hashChange to pushState only if both requested.', () => {
     assert.expect(0);
     Schmackbone.history.stop();
     location.replace('http://example.com/root?a=b#x/y');
@@ -715,7 +720,7 @@ describe('Schmackbone.Router', () => {
     });
   });
 
-  QUnit.test('No hash fallback.', function(assert) {
+  test('No hash fallback.', () => {
     assert.expect(0);
     Schmackbone.history.stop();
     Schmackbone.history = _.extend(new Schmackbone.History, {
@@ -742,7 +747,7 @@ describe('Schmackbone.Router', () => {
     Schmackbone.history.checkUrl();
   });
 
-  QUnit.test('#2656 - No trailing slash on root.', function(assert) {
+  test('#2656 - No trailing slash on root.', () => {
     assert.expect(1);
     Schmackbone.history.stop();
     Schmackbone.history = _.extend(new Schmackbone.History, {
@@ -758,7 +763,7 @@ describe('Schmackbone.Router', () => {
     Schmackbone.history.navigate('');
   });
 
-  QUnit.test('#2656 - No trailing slash on root.', function(assert) {
+  test('#2656 - No trailing slash on root.', () => {
     assert.expect(1);
     Schmackbone.history.stop();
     Schmackbone.history = _.extend(new Schmackbone.History, {
@@ -774,7 +779,7 @@ describe('Schmackbone.Router', () => {
     Schmackbone.history.navigate('');
   });
 
-  QUnit.test('#2656 - No trailing slash on root.', function(assert) {
+  test('#2656 - No trailing slash on root.', () => {
     assert.expect(1);
     Schmackbone.history.stop();
     Schmackbone.history = _.extend(new Schmackbone.History, {
@@ -790,7 +795,7 @@ describe('Schmackbone.Router', () => {
     Schmackbone.history.navigate('?x=1');
   });
 
-  QUnit.test('#2765 - Fragment matching sans query/hash.', function(assert) {
+  test('#2765 - Fragment matching sans query/hash.', () => {
     assert.expect(2);
     Schmackbone.history.stop();
     Schmackbone.history = _.extend(new Schmackbone.History, {
@@ -814,7 +819,7 @@ describe('Schmackbone.Router', () => {
     Schmackbone.history.navigate('path?query#hash', true);
   });
 
-  QUnit.test('Do not decode the search params.', function(assert) {
+  test('Do not decode the search params.', () => {
     assert.expect(1);
     var MyRouter = Schmackbone.Router.extend({
       routes: {
@@ -827,7 +832,7 @@ describe('Schmackbone.Router', () => {
     Schmackbone.history.navigate('path?x=y%3Fz', true);
   });
 
-  QUnit.test('Navigate to a hash url.', function(assert) {
+  test('Navigate to a hash url.', () => {
     assert.expect(1);
     Schmackbone.history.stop();
     Schmackbone.history = _.extend(new Schmackbone.History, {location: location});
@@ -844,7 +849,7 @@ describe('Schmackbone.Router', () => {
     Schmackbone.history.checkUrl();
   });
 
-  QUnit.test('#navigate to a hash url.', function(assert) {
+  test('#navigate to a hash url.', () => {
     assert.expect(1);
     Schmackbone.history.stop();
     Schmackbone.history = _.extend(new Schmackbone.History, {location: location});
@@ -860,7 +865,7 @@ describe('Schmackbone.Router', () => {
     Schmackbone.history.navigate('path?x=y#hash', true);
   });
 
-  QUnit.test('unicode pathname', function(assert) {
+  test('unicode pathname', () => {
     assert.expect(1);
     location.replace('http://example.com/myyjä');
     Schmackbone.history.stop();
@@ -876,7 +881,7 @@ describe('Schmackbone.Router', () => {
     Schmackbone.history.start({pushState: true});
   });
 
-  QUnit.test('unicode pathname with % in a parameter', function(assert) {
+  test('unicode pathname with % in a parameter', () => {
     assert.expect(1);
     location.replace('http://example.com/myyjä/foo%20%25%3F%2f%40%25%20bar');
     location.pathname = '/myyj%C3%A4/foo%20%25%3F%2f%40%25%20bar';
@@ -893,7 +898,7 @@ describe('Schmackbone.Router', () => {
     Schmackbone.history.start({pushState: true});
   });
 
-  QUnit.test('newline in route', function(assert) {
+  test('newline in route', () => {
     assert.expect(1);
     location.replace('http://example.com/stuff%0Anonsense?param=foo%0Abar');
     Schmackbone.history.stop();
@@ -909,7 +914,7 @@ describe('Schmackbone.Router', () => {
     Schmackbone.history.start({pushState: true});
   });
 
-  QUnit.test('Router#execute receives callback, args, name.', function(assert) {
+  test('Router#execute receives callback, args, name.', () => {
     assert.expect(3);
     location.replace('http://example.com#foo/123/bar?x=y');
     Schmackbone.history.stop();
@@ -927,7 +932,7 @@ describe('Schmackbone.Router', () => {
     Schmackbone.history.start();
   });
 
-  QUnit.test('pushState to hashChange with only search params.', function(assert) {
+  test('pushState to hashChange with only search params.', () => {
     assert.expect(1);
     Schmackbone.history.stop();
     location.replace('http://example.com?a=b');
@@ -941,7 +946,7 @@ describe('Schmackbone.Router', () => {
     Schmackbone.history.start({pushState: true});
   });
 
-  QUnit.test('#3123 - History#navigate decodes before comparison.', function(assert) {
+  test('#3123 - History#navigate decodes before comparison.', () => {
     assert.expect(1);
     Schmackbone.history.stop();
     location.replace('http://example.com/shop/search?keyword=short%20dress');
@@ -957,19 +962,23 @@ describe('Schmackbone.Router', () => {
     assert.strictEqual(Schmackbone.history.fragment, 'shop/search?keyword=short dress');
   });
 
-  QUnit.test('#3175 - Urls in the params', function(assert) {
+  test('#3175 - Urls in the params', () => {
     assert.expect(1);
     Schmackbone.history.stop();
-    location.replace('http://example.com#login?a=value&backUrl=https%3A%2F%2Fwww.msn.com%2Fidp%2Fidpdemo%3Fspid%3Dspdemo%26target%3Db');
+    location.replace(
+      'http://example.com#login' +
+        '?a=value&backUrl=https%3A%2F%2Fwww.msn.com%2Fidp%2Fidpdemo%3Fspid%3Dspdemo%26target%3Db');
     Schmackbone.history = _.extend(new Schmackbone.History, {location: location});
     var myRouter = new Schmackbone.Router;
     myRouter.route('login', function(params) {
-      assert.strictEqual(params, 'a=value&backUrl=https%3A%2F%2Fwww.msn.com%2Fidp%2Fidpdemo%3Fspid%3Dspdemo%26target%3Db');
+      expect(params).toEqual(
+        'a=value&backUrl=https%3A%2F%2Fwww.msn.com%2Fidp%2Fidpdemo%3Fspid%3Dspdemo%26target%3Db'
+      );
     });
     Schmackbone.history.start();
   });
 
-  QUnit.test('#3358 - pushState to hashChange transition with search params', function(assert) {
+  test('#3358 - pushState to hashChange transition with search params', () => {
     assert.expect(1);
     Schmackbone.history.stop();
     location.replace('http://example.com/root?foo=bar');
@@ -986,7 +995,7 @@ describe('Schmackbone.Router', () => {
     Schmackbone.history.start({root: '/root', pushState: true});
   });
 
-  QUnit.test('Paths that don\'t match the root should not match no root', function(assert) {
+  test('Paths that don\'t match the root should not match no root', () => {
     assert.expect(0);
     location.replace('http://example.com/foo');
     Schmackbone.history.stop();
@@ -1002,7 +1011,7 @@ describe('Schmackbone.Router', () => {
     Schmackbone.history.start({root: 'root', pushState: true});
   });
 
-  QUnit.test('Paths that don\'t match the root should not match roots of the same length', function(assert) {
+  test('Paths that don\'t match the root should not match roots of the same length', () => {
     assert.expect(0);
     location.replace('http://example.com/xxxx/foo');
     Schmackbone.history.stop();
@@ -1018,7 +1027,7 @@ describe('Schmackbone.Router', () => {
     Schmackbone.history.start({root: 'root', pushState: true});
   });
 
-  QUnit.test('roots with regex characters', function(assert) {
+  test('roots with regex characters', () => {
     assert.expect(1);
     location.replace('http://example.com/x+y.z/foo');
     Schmackbone.history.stop();
@@ -1030,7 +1039,7 @@ describe('Schmackbone.Router', () => {
     Schmackbone.history.start({root: 'x+y.z', pushState: true});
   });
 
-  QUnit.test('roots with unicode characters', function(assert) {
+  test('roots with unicode characters', () => {
     assert.expect(1);
     location.replace('http://example.com/®ooτ/foo');
     Schmackbone.history.stop();
@@ -1042,7 +1051,7 @@ describe('Schmackbone.Router', () => {
     Schmackbone.history.start({root: '®ooτ', pushState: true});
   });
 
-  QUnit.test('roots without slash', function(assert) {
+  test('roots without slash', () => {
     assert.expect(1);
     location.replace('http://example.com/®ooτ');
     Schmackbone.history.stop();
@@ -1054,7 +1063,7 @@ describe('Schmackbone.Router', () => {
     Schmackbone.history.start({root: '®ooτ', pushState: true});
   });
 
-  QUnit.test('#4025 - navigate updates URL hash as is', function(assert) {
+  test('#4025 - navigate updates URL hash as is', () => {
     assert.expect(1);
     var route = 'search/has%20space';
     Schmackbone.history.navigate(route);
