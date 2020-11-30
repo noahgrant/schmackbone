@@ -202,8 +202,6 @@ By default, the `ajaxPrefilter` function is set to the identity function.
 
 ### Misc
 
-* Note that Schmackbone uses ES2015 in its source and does no transpiling. This is mostly important for those who want
-  to use it directly in the browser, in which case you'll need to transpile it yourself or only support modern browsers.
-  Anyone using a bundler can transpile this along with the rest of their code.
+* Note that Schmackbone uses ES2015 in its source and does no transpiling&mdash;including `import`/`export` (Local babel configuration is for testing, only). Unlike Backbone, whose legacy monolith used UMD syntax and could be used directly in the browser, Schmackbone can be used only in modern browsers via the `type="module"` script MIME-type or via a bundler like webpack that handles module transforms.
 
-For Backbone-related information, see [the website](https://backbonejs.org) and especially its [annotated source page](https://backbonejs.org/docs/backbone.html).
+* For Backbone-related information, see [the website](https://backbonejs.org) and especially its [annotated source page](https://backbonejs.org/docs/backbone.html).
