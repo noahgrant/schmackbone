@@ -1173,43 +1173,38 @@ describe('Schmackbone.Collection', () => {
     expect(colUndefined.comparator).toEqual(comparator);
   });
 
-  /*
   test('#1355 - `options` is passed to success callbacks', () => {
-    assert.expect(2);
-    var m = new Schmackbone.Model({x: 1});
-    var collection = new Schmackbone.Collection();
-    var opts = {
-      opts: true,
-      success: function(coll, resp, options) {
-        assert.ok(options.opts);
-      }
-    };
-    collection.sync = m.sync = function( method, coll, options ){
-      options.success({});
-    };
+    var m = new Model({x: 1}),
+        collection = new Collection(),
+        opts = {
+          opts: true,
+          success: (coll, resp, options) => expect(options.opts).toBe(true)
+        };
+
+    collection.sync = m.sync = (method, coll, options) => options.success({});
     collection.fetch(opts);
     collection.create(m, opts);
   });
 
-  test("#1412 - Trigger 'request' and 'sync' events.", () => {
-    assert.expect(4);
-    var collection = new Schmackbone.Collection;
-    collection.url = '/test';
-    Schmackbone.ajax = function(settings){ settings.success(); };
+  test('#1412 - Trigger `request` and `sync` events', () => {
+    var collection = new Collection;
 
-    collection.on('request', function(obj, xhr, options) {
-      assert.ok(obj === collection, "collection has correct 'request' event after fetching");
+    collection.url = '/test';
+    collection.sync = (method, model, options) => options.success();
+
+    collection.on('request', (obj, xhr, options) => {
+      expect(obj).toEqual(collection);
     });
-    collection.on('sync', function(obj, response, options) {
-      assert.ok(obj === collection, "collection has correct 'sync' event after fetching");
+    collection.on('sync', (obj, response, options) => {
+      expect(obj).toEqual(collection);
     });
     collection.fetch();
     collection.off();
 
-    collection.on('request', function(obj, xhr, options) {
+    collection.on('request', (obj, xhr, options) => {
       expect(obj).toEqual(collection.get(1));
     });
-    collection.on('sync', function(obj, response, options) {
+    collection.on('sync', (obj, response, options) => {
       expect(obj).toEqual(collection.get(1));
     });
     collection.create({id: 1});
@@ -1217,24 +1212,23 @@ describe('Schmackbone.Collection', () => {
   });
 
   test('#3283 - fetch, create calls success with context', () => {
-    assert.expect(2);
-    var collection = new Schmackbone.Collection;
+    var collection = new Collection,
+        m = new Model({id: 1}),
+        obj = {},
+        options = {
+          context: obj,
+          success() {
+            expect(this).toEqual(obj);
+          }
+        };
+
     collection.url = '/test';
-    Schmackbone.ajax = function(settings) {
-      settings.success.call(settings.context);
-    };
-    var obj = {};
-    var options = {
-      context: obj,
-      success: function() {
-        assert.equal(this, obj);
-      }
-    };
+
+    collection.sync = m.sync = (model, coll, _options) => _options.success.call(_options.context);
 
     collection.fetch(options);
-    collection.create({id: 1}, options);
+    collection.create(m, options);
   });
-  */
 
   test('#1447 - create with wait adds model.', () => {
     var collection = new Collection,

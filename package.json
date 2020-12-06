@@ -54,8 +54,6 @@
   },
   "files": [
     "schmackbone.js",
-    "schmackbone-min.js",
-    "schmackbone-min.map",
     "LICENSE"
   ]
 }
