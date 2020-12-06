@@ -1,6 +1,4 @@
-import _mixin from '../lib/_mixin';
 import Collection from '../lib/collection';
-import {isEqual} from 'underscore';
 import Model from '../lib/model';
 
 /* eslint-disable id-length */
@@ -173,32 +171,6 @@ describe('Schmackbone.Model', () => {
     expect(model.url()).toEqual('/nested/1/collection');
     model.set({id: 2});
     expect(model.url()).toEqual('/nested/1/collection/2');
-  });
-
-  test('underscore methods', () => {
-    var model;
-
-    class _Model extends Model {}
-    _mixin(_Model, {keys: 1, values: 1, invert: 1, pick: 0, omit: 0});
-
-    model = new _Model({foo: 'a', bar: 'b', baz: 'c'});
-
-    expect(model.keys()).toEqual(['foo', 'bar', 'baz']);
-    expect(model.values()).toEqual(['a', 'b', 'c']);
-    expect(model.invert()).toEqual({a: 'foo', b: 'bar', c: 'baz'});
-    expect(model.pick('foo', 'baz')).toEqual({foo: 'a', baz: 'c'});
-    expect(model.omit('foo', 'bar')).toEqual({baz: 'c'});
-  });
-
-  test('chain', () => {
-    var model;
-
-    class _Model extends Model {}
-    _mixin(_Model, {keys: 1, values: 1, invert: 1, pick: 0, omit: 0, chain: 1});
-
-    model = new _Model({a: 0, b: 1, c: 2});
-
-    expect(model.chain().pick('a', 'b', 'c').values().compact().value()).toEqual([1, 2]);
   });
 
   test('clone', () => {
@@ -1567,24 +1539,6 @@ describe('Schmackbone.Model', () => {
     model.set({valid: false});
     expect(model.isValid()).toBe(false);
     expect(!model.set('valid', false, {validate: true})).toBe(true);
-  });
-
-  test('mixin', () => {
-    var model1,
-        model2,
-        model3;
-
-    class _Model extends Model {}
-
-    _mixin(_Model);
-    _Model.mixin({isEqual: (m1, m2) => isEqual(m1, m2.attributes)});
-
-    model1 = new _Model({a: {b: 2}, c: 3});
-    model2 = new _Model({a: {b: 2}, c: 3});
-    model3 = new _Model({a: {b: 4}, c: 3});
-
-    expect(model1.isEqual(model2)).toBe(true);
-    expect(model1.isEqual(model3)).toBe(false);
   });
 
   test('#1179 - isValid returns true in the absence of validate.', () => {

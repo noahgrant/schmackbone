@@ -706,7 +706,7 @@ describe('Schmackbone.Collection', () => {
     collection.url = '/test';
     await collection.create({label: 'f'});
 
-    model = collection.at(0);
+    model = collection.first();
     expect(Model.prototype.sync.mock.calls[0][0]).toEqual('create');
     expect(Model.prototype.sync.mock.calls[0][1]).toEqual(model);
     expect(model.get('label')).toEqual('f');
@@ -1064,95 +1064,116 @@ describe('Schmackbone.Collection', () => {
     expect(collection.length).toEqual(0);
   });
 
-  /*
   test('#861, adding models to a collection which do not pass validation, with ' +
       'validate:true', () => {
-    assert.expect(2);
-    var Model = Schmackbone.Model.extend({
-      validate: function(attrs) {
-        if (attrs.id === 3) return "id can't be 3";
+    var collection,
+        invalidSpy = jest.fn();
+
+    class _Model extends Model {
+      validate(attrs) {
+        if (attrs.id === 3) {
+          return 'id can\'t be 3';
+        }
       }
-    });
+    }
 
-    var Collection = Schmackbone.Collection.extend({
-      model: Model
-    });
+    class _Collection extends Collection {
+      static model = _Model
+    }
 
-    var collection = new Collection;
-    collection.on('invalid', function() { assert.ok(true); });
+    collection = new _Collection;
+    collection.on('invalid', invalidSpy);
 
     collection.add([{id: 1}, {id: 2}, {id: 3}, {id: 4}, {id: 5}, {id: 6}], {validate: true});
-    assert.deepEqual(collection.pluck('id'), [1, 2, 4, 5, 6]);
+    expect(collection.pluck('id')).toEqual([1, 2, 4, 5, 6]);
+    expect(invalidSpy).toHaveBeenCalledTimes(1);
   });
 
   test('Invalid models are discarded with validate:true.', () => {
-    assert.expect(5);
-    var collection = new Schmackbone.Collection;
-    collection.on('test', function() { assert.ok(true); });
-    collection.model = Schmackbone.Model.extend({
-      validate: function(attrs){ if (!attrs.valid) return 'invalid'; }
-    });
-    var model = new collection.model({id: 1, valid: true});
+    var testSpy = jest.fn(),
+        model,
+        collection = new Collection;
+
+    collection.on('test', testSpy);
+    collection.model = class extends Model {
+      validate(attrs) {
+        if (!attrs.valid) {
+          return 'invalid';
+        }
+      }
+    };
+
+    /* eslint-disable new-cap */
+    model = new collection.model({id: 1, valid: true});
+    /* eslint-enable new-cap */
     collection.add([model, {id: 2}], {validate: true});
     model.trigger('test');
-    assert.ok(collection.get(model.cid));
-    assert.ok(collection.get(1));
-    assert.ok(!collection.get(2));
-    assert.equal(collection.length, 1);
+    expect(!!collection.get(model.cid)).toBe(true);
+    expect(!!collection.get(1)).toBe(true);
+    expect(!collection.get(2)).toBe(true);
+    expect(collection.length).toEqual(1);
   });
 
   test('multiple copies of the same model', () => {
-    assert.expect(3);
-    var collection = new Schmackbone.Collection();
-    var model = new Schmackbone.Model();
+    var collection = new Collection(),
+        model = new Model();
+
     collection.add([model, model]);
-    assert.equal(collection.length, 1);
+    expect(collection.length).toEqual(1);
     collection.add([{id: 1}, {id: 1}]);
-    assert.equal(collection.length, 2);
-    assert.equal(collection.last().id, 1);
+    expect(collection.length).toEqual(2);
+    expect(collection.last().id).toEqual(1);
   });
 
   test('#964 - collection.get return inconsistent', () => {
-    assert.expect(2);
-    var collection = new Schmackbone.Collection();
-    assert.ok(collection.get(null) === undefined);
-    assert.ok(collection.get() === undefined);
+    var collection = new Collection();
+
+    expect(collection.get(null)).not.toBeDefined();
+    expect(collection.get()).not.toBeDefined();
   });
 
   test('#1112 - passing options.model sets collection.model', () => {
-    assert.expect(2);
-    var Model = Schmackbone.Model.extend({});
-    var collection = new Schmackbone.Collection([{id: 1}], {model: Model});
-    assert.ok(collection.model === Model);
-    assert.ok(collection.at(0) instanceof Model);
+    var collection;
+
+    class _Model extends Model {}
+    collection = new Collection([{id: 1}], {model: _Model});
+    expect(collection.model).toEqual(_Model);
+    expect(collection.at(0) instanceof Model).toBe(true);
   });
 
   test('null and undefined are invalid ids.', () => {
-    assert.expect(2);
-    var model = new Schmackbone.Model({id: 1});
-    var collection = new Schmackbone.Collection([model]);
+    var model = new Model({id: 1}),
+        collection = new Collection([model]);
+
     model.set({id: null});
-    assert.ok(!collection.get('null'));
+    expect(!collection.get('null')).toBe(true);
     model.set({id: 1});
     model.set({id: undefined});
-    assert.ok(!collection.get('undefined'));
+    expect(!collection.get('undefined')).toBe(true);
   });
 
   test('falsy comparator', () => {
-    assert.expect(4);
-    var Col = Schmackbone.Collection.extend({
-      comparator: function(model){ return model.id; }
-    });
-    var collection = new Col();
-    var colFalse = new Col(null, {comparator: false});
-    var colNull = new Col(null, {comparator: null});
-    var colUndefined = new Col(null, {comparator: undefined});
-    assert.ok(collection.comparator);
-    assert.ok(!colFalse.comparator);
-    assert.ok(!colNull.comparator);
-    assert.ok(colUndefined.comparator);
+    var comparator = (model) => model.id,
+        collection,
+        colFalse,
+        colNull,
+        colUndefined;
+
+    class Col extends Collection {
+      static comparator = comparator
+    }
+
+    collection = new Col();
+    colFalse = new Col(null, {comparator: false});
+    colNull = new Col(null, {comparator: null});
+    colUndefined = new Col(null, {comparator: undefined});
+    expect(collection.comparator).toEqual(comparator);
+    expect(colFalse.comparator).toEqual(comparator);
+    expect(colNull.comparator).toEqual(comparator);
+    expect(colUndefined.comparator).toEqual(comparator);
   });
 
+  /*
   test('#1355 - `options` is passed to success callbacks', () => {
     assert.expect(2);
     var m = new Schmackbone.Model({x: 1});
@@ -1213,462 +1234,539 @@ describe('Schmackbone.Collection', () => {
     collection.fetch(options);
     collection.create({id: 1}, options);
   });
+  */
 
   test('#1447 - create with wait adds model.', () => {
-    assert.expect(1);
-    var collection = new Schmackbone.Collection;
-    var model = new Schmackbone.Model;
-    model.sync = function(method, m, options){ options.success(); };
-    collection.on('add', function(){ assert.ok(true); });
+    var collection = new Collection,
+        model = new Model,
+        addSpy = jest.fn();
+
+    model.sync = (method, m, options) => options.success();
+
+    collection.on('add', addSpy);
     collection.create(model, {wait: true});
+
+    expect(addSpy).toHaveBeenCalled();
   });
 
   test('#1448 - add sorts collection after merge.', () => {
-    assert.expect(1);
-    var collection = new Schmackbone.Collection([
+    var collection = new Collection([
       {id: 1, x: 1},
       {id: 2, x: 2}
     ]);
-    collection.comparator = function(model){ return model.get('x'); };
+
+    collection.comparator = (model) => model.get('x');
     collection.add({id: 1, x: 3}, {merge: true});
-    assert.deepEqual(collection.pluck('id'), [2, 1]);
-  });
-
-  test('#1655 - groupBy can be used with a string argument.', () => {
-    assert.expect(3);
-    var collection = new Schmackbone.Collection([{x: 1}, {x: 2}]);
-    var grouped = collection.groupBy('x');
-    assert.strictEqual(_.keys(grouped).length, 2);
-    assert.strictEqual(grouped[1][0].get('x'), 1);
-    assert.strictEqual(grouped[2][0].get('x'), 2);
-  });
-
-  test('#1655 - sortBy can be used with a string argument.', () => {
-    assert.expect(1);
-    var collection = new Schmackbone.Collection([{x: 3}, {x: 1}, {x: 2}]);
-    var values = _.map(collection.sortBy('x'), function(model) {
-      return model.get('x');
-    });
-    assert.deepEqual(values, [1, 2, 3]);
+    expect(collection.pluck('id')).toEqual([2, 1]);
   });
 
   test('#1604 - Removal during iteration.', () => {
-    assert.expect(0);
-    var collection = new Schmackbone.Collection([{}, {}]);
-    collection.on('add', function() {
-      collection.at(0).destroy();
-    });
+    var collection = new Collection([{}, {}]);
+
+    collection.on('add', () => collection.at(0).destroy());
     collection.add({}, {at: 0});
+
+    expect(collection.length).toEqual(2);
   });
 
   test('#1638 - `sort` during `add` triggers correctly.', () => {
-    var collection = new Schmackbone.Collection;
-    collection.comparator = function(model) { return model.get('x'); };
-    var added = [];
-    collection.on('add', function(model) {
+    var added = [],
+        collection = new Collection;
+
+    collection.comparator = (model) => model.get('x');
+    collection.on('add', (model) => {
       model.set({x: 3});
       collection.sort();
       added.push(model.id);
     });
     collection.add([{id: 1, x: 1}, {id: 2, x: 2}]);
-    assert.deepEqual(added, [1, 2]);
+    expect(added).toEqual([1, 2]);
   });
 
-  test('fetch parses models by default', () => {
-    assert.expect(1);
-    var model = {};
-    var Collection = Schmackbone.Collection.extend({
-      url: 'test',
-      model: Schmackbone.Model.extend({
-        parse: function(resp) {
-          assert.strictEqual(resp, model);
+  test('fetch parses models by default', async() => {
+    var model = {},
+        parseSpy = jest.fn();
+
+    class _Collection extends Collection {
+      url = 'test'
+
+      static model = class extends Model {
+        parse(resp) {
+          parseSpy();
+          expect(resp).toEqual(model);
         }
-      })
-    });
-    new Collection().fetch();
-    this.ajaxSettings.success([model]);
+      }
+    }
+
+    await new _Collection().fetch();
+    expect(parseSpy).toHaveBeenCalled();
   });
 
-  test("`sort` shouldn't always fire on `add`", () => {
-    assert.expect(1);
-    var collection = new Schmackbone.Collection([{id: 1}, {id: 2}, {id: 3}], {
-      comparator: 'id'
-    });
-    collection.sort = function(){ assert.ok(true); };
+  test('`sort` shouldn\'t always fire on `add`', () => {
+    var collection = new Collection([{id: 1}, {id: 2}, {id: 3}], {comparator: 'id'});
+
+    collection.sort = jest.fn();
     collection.add([]);
+    expect(collection.sort).not.toHaveBeenCalled();
     collection.add({id: 1});
+    expect(collection.sort).not.toHaveBeenCalled();
     collection.add([{id: 2}, {id: 3}]);
+    expect(collection.sort).not.toHaveBeenCalled();
     collection.add({id: 4});
+    expect(collection.sort).toHaveBeenCalledTimes(1);
   });
 
   test('#1407 parse option on constructor parses collection and models', () => {
-    assert.expect(2);
-    var model = {
-      namespace: [{id: 1}, {id: 2}]
-    };
-    var Collection = Schmackbone.Collection.extend({
-      model: Schmackbone.Model.extend({
-        parse: function(m) {
+    var model = {namespace: [{id: 1}, {id: 2}]},
+        collection;
+
+    class _Collection extends Collection {
+      static model = class extends Model {
+        parse(m) {
           m.name = 'test';
+
           return m;
         }
-      }),
-      parse: function(m) {
+      }
+
+      parse(m) {
         return m.namespace;
       }
-    });
-    var collection = new Collection(model, {parse: true});
+    }
+    collection = new _Collection(model, {parse: true});
 
-    assert.equal(collection.length, 2);
-    assert.equal(collection.at(0).get('name'), 'test');
+    expect(collection.length).toEqual(2);
+    expect(collection.at(0).get('name')).toEqual('test');
   });
 
   test('#1407 parse option on reset parses collection and models', () => {
-    assert.expect(2);
-    var model = {
-      namespace: [{id: 1}, {id: 2}]
-    };
-    var Collection = Schmackbone.Collection.extend({
-      model: Schmackbone.Model.extend({
-        parse: function(m) {
+    var model = {namespace: [{id: 1}, {id: 2}]},
+        collection;
+
+    class _Collection extends Collection {
+      static model = class extends Model {
+        parse(m) {
           m.name = 'test';
+
           return m;
         }
-      }),
-      parse: function(m) {
+      }
+
+      parse(m) {
         return m.namespace;
       }
-    });
-    var collection = new Collection();
+    }
+
+    collection = new _Collection();
     collection.reset(model, {parse: true});
 
-    assert.equal(collection.length, 2);
-    assert.equal(collection.at(0).get('name'), 'test');
+    expect(collection.length).toEqual(2);
+    expect(collection.at(0).get('name')).toEqual('test');
   });
 
   test('Reset includes previous models in triggered event.', () => {
-    assert.expect(1);
-    var model = new Schmackbone.Model();
-    var collection = new Schmackbone.Collection([model]);
-    collection.on('reset', function(coll, options) {
-      assert.deepEqual(options.previousModels, [model]);
+    var model = new Model(),
+        collection = new Collection([model]);
+
+    collection.on('reset', (coll, options) => {
+      expect(options.previousModels).toEqual([model]);
     });
     collection.reset([]);
   });
 
   test('set', () => {
-    var m1 = new Schmackbone.Model();
-    var m2 = new Schmackbone.Model({id: 2});
-    var m3 = new Schmackbone.Model();
-    var collection = new Schmackbone.Collection([m1, m2]);
+    var m1 = new Model(),
+        m2 = new Model({id: 2}),
+        m3 = new Model(),
+        collection = new Collection([m1, m2]);
 
     // Test add/change/remove events
-    collection.on('add', function(model) {
-      assert.strictEqual(model, m3);
-    });
-    collection.on('change', function(model) {
-      assert.strictEqual(model, m2);
-    });
-    collection.on('remove', function(model) {
-      assert.strictEqual(model, m1);
-    });
+    collection.on('add', (model) => expect(model).toEqual(m3));
+    collection.on('change', (model) => expect(model).toEqual(m2));
+    collection.on('remove', (model) => expect(model).toEqual(m1));
 
     // remove: false doesn't remove any models
     collection.set([], {remove: false});
-    assert.strictEqual(collection.length, 2);
+    expect(collection.length).toEqual(2);
 
     // add: false doesn't add any models
     collection.set([m1, m2, m3], {add: false});
-    assert.strictEqual(collection.length, 2);
+    expect(collection.length).toEqual(2);
 
     // merge: false doesn't change any models
     collection.set([m1, {id: 2, a: 1}], {merge: false});
-    assert.strictEqual(m2.get('a'), void 0);
+    expect(m2.get('a')).not.toBeDefined();
 
     // add: false, remove: false only merges existing models
     collection.set([m1, {id: 2, a: 0}, m3, {id: 4}], {add: false, remove: false});
-    assert.strictEqual(collection.length, 2);
-    assert.strictEqual(m2.get('a'), 0);
+    expect(collection.length).toEqual(2);
+    expect(m2.get('a')).toEqual(0);
 
     // default options add/remove/merge as appropriate
     collection.set([{id: 2, a: 1}, m3]);
-    assert.strictEqual(collection.length, 2);
-    assert.strictEqual(m2.get('a'), 1);
+    expect(collection.length).toEqual(2);
+    expect(m2.get('a')).toEqual(1);
 
     // Test removing models not passing an argument
-    collection.off('remove').on('remove', function(model) {
-      assert.ok(model === m2 || model === m3);
+    collection.off('remove').on('remove', (model) => {
+      expect(model === m2 || model === m3).toBe(true);
     });
     collection.set([]);
-    assert.strictEqual(collection.length, 0);
+    expect(collection.length).toEqual(0);
 
     // Test null models on set doesn't clear collection
     collection.off();
     collection.set([{id: 1}]);
     collection.set();
-    assert.strictEqual(collection.length, 1);
+    expect(collection.length).toEqual(1);
   });
 
   test('set with only cids', () => {
-    assert.expect(3);
-    var m1 = new Schmackbone.Model;
-    var m2 = new Schmackbone.Model;
-    var collection = new Schmackbone.Collection;
+    var m1 = new Model,
+        m2 = new Model,
+        collection = new Collection;
+
     collection.set([m1, m2]);
-    assert.equal(collection.length, 2);
+    expect(collection.length).toEqual(2);
     collection.set([m1]);
-    assert.equal(collection.length, 1);
+    expect(collection.length).toEqual(1);
     collection.set([m1, m1, m1, m2, m2], {remove: false});
-    assert.equal(collection.length, 2);
+    expect(collection.length).toEqual(2);
   });
 
   test('set with only idAttribute', () => {
-    assert.expect(3);
-    var m1 = {_id: 1};
-    var m2 = {_id: 2};
-    var Col = Schmackbone.Collection.extend({
-      model: Schmackbone.Model.extend({
-        idAttribute: '_id'
-      })
-    });
-    var collection = new Col;
+    var m1 = {_id: 1},
+        m2 = {_id: 2},
+        collection;
+
+    class Col extends Collection {
+      static model = class extends Model {
+        static idAttribute = '_id'
+      }
+    }
+
+    collection = new Col;
     collection.set([m1, m2]);
-    assert.equal(collection.length, 2);
+    expect(collection.length).toEqual(2);
     collection.set([m1]);
-    assert.equal(collection.length, 1);
+    expect(collection.length).toEqual(1);
     collection.set([m1, m1, m1, m2, m2], {remove: false});
-    assert.equal(collection.length, 2);
+    expect(collection.length).toEqual(2);
   });
 
   test('set + merge with default values defined', () => {
-    var Model = Schmackbone.Model.extend({
-      defaults: {
-        key: 'value'
-      }
-    });
-    var m = new Model({id: 1});
-    var collection = new Schmackbone.Collection([m], {model: Model});
-    assert.equal(collection.first().get('key'), 'value');
+    var m,
+        collection;
+
+    class _Model extends Model {
+      static defaults = {key: 'value'}
+    }
+
+    m = new _Model({id: 1});
+    collection = new Collection([m], {model: _Model});
+    expect(collection.at(0).get('key')).toEqual('value');
 
     collection.set({id: 1, key: 'other'});
-    assert.equal(collection.first().get('key'), 'other');
+    expect(collection.at(0).get('key')).toEqual('other');
 
     collection.set({id: 1, other: 'value'});
-    assert.equal(collection.first().get('key'), 'other');
-    assert.equal(collection.length, 1);
+    expect(collection.at(0).get('key')).toEqual('other');
+    expect(collection.length).toEqual(1);
   });
 
   test('merge without mutation', () => {
-    var Model = Schmackbone.Model.extend({
-      initialize: function(attrs, options) {
+    var data = [{id: 1, child: {id: 2}}],
+        collection;
+
+    class _Model extends Model {
+      initialize(attrs, options) {
         if (attrs.child) {
           this.set('child', new Model(attrs.child, options), options);
         }
       }
-    });
-    var Collection = Schmackbone.Collection.extend({model: Model});
-    var data = [{id: 1, child: {id: 2}}];
-    var collection = new Collection(data);
-    assert.equal(collection.first().id, 1);
+    }
+
+    class _Collection extends Collection {
+      static model = _Model
+    }
+
+    collection = new _Collection(data);
+    expect(collection.at(0).id).toEqual(1);
     collection.set(data);
-    assert.equal(collection.first().id, 1);
+    expect(collection.at(0).id).toEqual(1);
     collection.set([{id: 2, child: {id: 2}}].concat(data));
-    assert.deepEqual(collection.pluck('id'), [2, 1]);
+    expect(collection.pluck('id')).toEqual([2, 1]);
   });
 
   test('`set` and model level `parse`', () => {
-    var Model = Schmackbone.Model.extend({});
-    var Collection = Schmackbone.Collection.extend({
-      model: Model,
-      parse: function(res) { return _.map(res.models, 'model'); }
-    });
-    var model = new Model({id: 1});
-    var collection = new Collection(model);
-    collection.set({models: [
-      {model: {id: 1}},
-      {model: {id: 2}}
-    ]}, {parse: true});
-    assert.equal(collection.first(), model);
+    var model,
+        collection;
+
+    class _Model extends Model {}
+    class _Collection extends Collection {
+      static model = _Model
+
+      parse(res) {
+        return res.models.map((m) => m.model);
+      }
+    }
+
+    model = new _Model({id: 1});
+    collection = new _Collection(model);
+    collection.set({
+      models: [
+        {model: {id: 1}},
+        {model: {id: 2}}
+      ]
+    }, {parse: true});
+    expect(collection.at(0)).toEqual(model);
   });
 
   test('`set` data is only parsed once', () => {
-    var collection = new Schmackbone.Collection();
-    collection.model = Schmackbone.Model.extend({
-      parse: function(data) {
-        assert.equal(data.parsed, void 0);
-        data.parsed = true;
+    var parseSpy = jest.fn(),
+        collection;
+
+    class _Model extends Model {
+      parse(data) {
+        parseSpy();
+
         return data;
       }
-    });
+    }
+
+    class _Collection extends Collection {
+      static model = _Model
+    }
+
+    collection = new _Collection;
     collection.set({}, {parse: true});
+    expect(parseSpy).toHaveBeenCalledTimes(1);
   });
 
   test('`set` matches input order in the absence of a comparator', () => {
-    var one = new Schmackbone.Model({id: 1});
-    var two = new Schmackbone.Model({id: 2});
-    var three = new Schmackbone.Model({id: 3});
-    var collection = new Schmackbone.Collection([one, two, three]);
+    var one = new Model({id: 1}),
+        two = new Model({id: 2}),
+        three = new Model({id: 3}),
+        collection = new Collection([one, two, three]);
+
     collection.set([{id: 3}, {id: 2}, {id: 1}]);
-    assert.deepEqual(collection.models, [three, two, one]);
+    expect(collection.models).toEqual([three, two, one]);
     collection.set([{id: 1}, {id: 2}]);
-    assert.deepEqual(collection.models, [one, two]);
+    expect(collection.models).toEqual([one, two]);
     collection.set([two, three, one]);
-    assert.deepEqual(collection.models, [two, three, one]);
+    expect(collection.models).toEqual([two, three, one]);
     collection.set([{id: 1}, {id: 2}], {remove: false});
-    assert.deepEqual(collection.models, [two, three, one]);
+    expect(collection.models).toEqual([two, three, one]);
     collection.set([{id: 1}, {id: 2}, {id: 3}], {merge: false});
-    assert.deepEqual(collection.models, [one, two, three]);
+    expect(collection.models).toEqual([one, two, three]);
     collection.set([three, two, one, {id: 4}], {add: false});
-    assert.deepEqual(collection.models, [one, two, three]);
+    expect(collection.models).toEqual([one, two, three]);
   });
 
   test('#1894 - Push should not trigger a sort', () => {
-    assert.expect(0);
-    var Collection = Schmackbone.Collection.extend({
-      comparator: 'id',
-      sort: function() { assert.ok(false); }
-    });
-    new Collection().push({id: 1});
+    var sortSpy = jest.fn();
+
+    class _Collection extends Collection {
+      static comparator = 'id'
+
+      sort = sortSpy
+    }
+
+    new _Collection().push({id: 1});
+
+    expect(sortSpy).not.toHaveBeenCalled();
   });
 
   test('#2428 - push duplicate models, return the correct one', () => {
-    assert.expect(1);
-    var collection = new Schmackbone.Collection;
-    var model1 = collection.push({id: 101});
-    var model2 = collection.push({id: 101});
-    assert.ok(model2.cid === model1.cid);
+    var collection = new Collection,
+        model1 = collection.push({id: 101}),
+        model2 = collection.push({id: 101});
+
+    expect(model2.cid).toEqual(model1.cid);
   });
 
   test('`set` with non-normal id', () => {
-    var Collection = Schmackbone.Collection.extend({
-      model: Schmackbone.Model.extend({idAttribute: '_id'})
-    });
-    var collection = new Collection({_id: 1});
+    var collection;
+
+    class _Collection extends Collection {
+      static model = class extends Model {
+        static idAttribute = '_id'
+      }
+    }
+
+    collection = new _Collection({_id: 1});
     collection.set([{_id: 1, a: 1}], {add: false});
-    assert.equal(collection.first().get('a'), 1);
+    expect(collection.at(0).get('a')).toEqual(1);
   });
 
   test('#1894 - `sort` can optionally be turned off', () => {
-    assert.expect(0);
-    var Collection = Schmackbone.Collection.extend({
-      comparator: 'id',
-      sort: function() { assert.ok(false); }
-    });
-    new Collection().add({id: 1}, {sort: false});
+    var sortSpy = jest.fn();
+
+    class _Collection extends Collection {
+      static comparator = 'id'
+
+      sort = sortSpy
+    }
+
+    new _Collection().add({id: 1}, {sort: false});
+
+    expect(sortSpy).not.toHaveBeenCalled();
   });
 
   test('#1915 - `parse` data in the right order in `set`', () => {
-    var collection = new (Schmackbone.Collection.extend({
-      parse: function(data) {
-        assert.strictEqual(data.status, 'ok');
+    var collection;
+
+    class _Collection extends Collection {
+      parse(data) {
+        expect(data.status).toEqual('ok');
+
         return data.data;
       }
-    }));
-    var res = {status: 'ok', data: [{id: 1}]};
-    collection.set(res, {parse: true});
+    }
+
+    collection = new _Collection;
+    collection.set({status: 'ok', data: [{id: 1}]}, {parse: true});
   });
 
-  test('#1939 - `parse` is passed `options`', () => {
-    var done = assert.async();
-    assert.expect(1);
-    var collection = new (Schmackbone.Collection.extend({
-      url: '/',
-      parse: function(data, options) {
-        assert.strictEqual(options.xhr.someHeader, 'headerValue');
+  test('#1939 - `parse` is passed `options`', async() => {
+    var collection;
+
+    class _Collection extends Collection {
+      url = '/'
+
+      parse(data, options) {
+        expect(options.response.headers.get('someHeader')).toEqual('headerValue');
+
         return data;
       }
-    }));
-    var ajax = Schmackbone.ajax;
-    Schmackbone.ajax = function(params) {
-      _.defer(params.success, []);
-      return {someHeader: 'headerValue'};
-    };
-    collection.fetch({
-      success: function() { done(); }
-    });
-    Schmackbone.ajax = ajax;
+    }
+
+    collection = new _Collection;
+
+    window.fetch.mockImplementation(() => Promise.resolve(
+      new Response(
+        new Blob([{test: 'response!'}], {type: 'application/json'}),
+        {status: 200, headers: {someHeader: 'headerValue'}}
+      )
+    ));
+
+    await collection.fetch();
   });
 
-  test('fetch will pass extra options to success callback', () => {
-    assert.expect(1);
-    var SpecialSyncCollection = Schmackbone.Collection.extend({
-      url: '/test',
-      sync: function(method, collection, options) {
-        _.extend(options, {specialSync: true});
-        return Schmackbone.Collection.prototype.sync.call(this, method, collection, options);
+  test('fetch will pass extra options to success callback', async() => {
+    var collection,
+        result;
+
+    class SpecialSyncCollection extends Collection {
+      url = '/test'
+
+      sync(method, coll, options) {
+        Object.assign(options, {specialSync: true});
+
+        return Collection.prototype.sync.call(this, method, coll, options);
       }
-    });
+    }
 
-    var collection = new SpecialSyncCollection();
+    collection = new SpecialSyncCollection();
+    result = await collection.fetch();
 
-    var onSuccess = function(coll, resp, options) {
-      assert.ok(options.specialSync, 'Options were passed correctly to callback');
-    };
-
-    collection.fetch({success: onSuccess});
-    this.ajaxSettings.success();
+    expect(result[2].specialSync).toBe(true);
   });
 
   test('`add` only `sort`s when necessary', () => {
-    assert.expect(2);
-    var collection = new (Schmackbone.Collection.extend({
-      comparator: 'a'
-    }))([{id: 1}, {id: 2}, {id: 3}]);
-    collection.on('sort', function() { assert.ok(true); });
-    collection.add({id: 4}); // do sort, new model
-    collection.add({id: 1, a: 1}, {merge: true}); // do sort, comparator change
-    collection.add({id: 1, b: 1}, {merge: true}); // don't sort, no comparator change
-    collection.add({id: 1, a: 1}, {merge: true}); // don't sort, no comparator change
-    collection.add(collection.models); // don't sort, nothing new
-    collection.add(collection.models, {merge: true}); // don't sort
+    var collection,
+        sortSpy = jest.fn();
+
+    class _Collection extends Collection {
+      static comparator = 'a'
+    }
+
+    collection = new _Collection([{id: 1}, {id: 2}, {id: 3}]);
+
+    collection.on('sort', sortSpy);
+    // do sort, new model
+    collection.add({id: 4});
+    expect(sortSpy).toHaveBeenCalledTimes(1);
+    // do sort, comparator change
+    collection.add({id: 1, a: 1}, {merge: true});
+    expect(sortSpy).toHaveBeenCalledTimes(2);
+    // don't sort, no comparator change
+    collection.add({id: 1, b: 1}, {merge: true});
+    expect(sortSpy).toHaveBeenCalledTimes(2);
+    // don't sort, no comparator change
+    collection.add({id: 1, a: 1}, {merge: true});
+    expect(sortSpy).toHaveBeenCalledTimes(2);
+    // don't sort, nothing new
+    collection.add(collection.models);
+    expect(sortSpy).toHaveBeenCalledTimes(2);
+    // don't sort
+    collection.add(collection.models, {merge: true});
+    expect(sortSpy).toHaveBeenCalledTimes(2);
   });
 
   test('`add` only `sort`s when necessary with comparator function', () => {
-    assert.expect(3);
-    var collection = new (Schmackbone.Collection.extend({
-      comparator: function(m1, m2) {
-        return m1.get('a') > m2.get('a') ? 1 : m1.get('a') < m2.get('a') ? -1 : 0;
-      }
-    }))([{id: 1}, {id: 2}, {id: 3}]);
-    collection.on('sort', function() { assert.ok(true); });
-    collection.add({id: 4}); // do sort, new model
-    collection.add({id: 1, a: 1}, {merge: true}); // do sort, model change
-    collection.add({id: 1, b: 1}, {merge: true}); // do sort, model change
-    collection.add({id: 1, a: 1}, {merge: true}); // don't sort, no model change
-    collection.add(collection.models); // don't sort, nothing new
-    collection.add(collection.models, {merge: true}); // don't sort
+    var collection,
+        sortSpy = jest.fn();
+
+    class _Collection extends Collection {
+      static comparator = (m1, m2) => m1.get('a') > m2.get('a') ?
+        1 :
+        m1.get('a') < m2.get('a') ?
+          -1 :
+          0;
+    }
+
+    collection = new _Collection([{id: 1}, {id: 2}, {id: 3}]);
+
+    collection.on('sort', sortSpy);
+    // do sort, new model
+    collection.add({id: 4});
+    expect(sortSpy).toHaveBeenCalledTimes(1);
+    // do sort, model change
+    collection.add({id: 1, a: 1}, {merge: true});
+    expect(sortSpy).toHaveBeenCalledTimes(2);
+    // do sort, model change
+    collection.add({id: 1, b: 1}, {merge: true});
+    expect(sortSpy).toHaveBeenCalledTimes(3);
+    // don't sort, no model change
+    collection.add({id: 1, a: 1}, {merge: true});
+    expect(sortSpy).toHaveBeenCalledTimes(3);
+    // don't sort, nothing new
+    collection.add(collection.models);
+    expect(sortSpy).toHaveBeenCalledTimes(3);
+    // don't sort
+    collection.add(collection.models, {merge: true});
+    expect(sortSpy).toHaveBeenCalledTimes(3);
   });
 
   test('Attach options to collection.', () => {
-    assert.expect(2);
-    var Model = Schmackbone.Model;
-    var comparator = function(){};
+    var comparator = function() {};
 
-    var collection = new Schmackbone.Collection([], {
+    var collection = new Collection([], {
       model: Model,
-      comparator: comparator
+      comparator
     });
 
-    assert.ok(collection.model === Model);
-    assert.ok(collection.comparator === comparator);
+    expect(collection.model).toEqual(Model);
+    expect(collection.comparator).toEqual(comparator);
   });
 
   test('Pass falsey for `models` for empty Col with `options`', () => {
-    assert.expect(9);
-    var opts = {a: 1, b: 2};
-    _.forEach([undefined, null, false], function(falsey) {
-      var Collection = Schmackbone.Collection.extend({
-        initialize: function(models, options) {
-          assert.strictEqual(models, falsey);
-          assert.strictEqual(options, opts);
-        }
-      });
+    var opts = {a: 1, b: 2},
+        collection;
 
-      var collection = new Collection(falsey, opts);
-      assert.strictEqual(collection.length, 0);
+    [undefined, null, false].forEach((falsey) => {
+      class _Collection extends Collection {
+        initialize(models, options) {
+          expect(models).toEqual(falsey);
+          expect(options).toEqual(opts);
+        }
+      }
+
+      collection = new _Collection(falsey, opts);
+      expect(collection.length).toEqual(0);
     });
   });
-  */
 
   test('`add` overrides `set` flags', () => {
     var collection = new Collection();
