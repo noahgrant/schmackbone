@@ -1,10 +1,9 @@
 {
   "name": "schmackbone",
-  "description": "jQuery-less and View-less Fork of BackboneJS",
+  "description": "jQuery-less, View-less, Promise-interfaced, Modularized Fork of BackboneJS",
   "url": "http://backbonejs.org",
   "keywords": [
     "model",
-    "view",
     "controller",
     "router",
     "server",
@@ -13,37 +12,55 @@
   ],
   "dependencies": {
     "qs": "^6.5.2",
-    "terser": "^4.6.12",
-    "underscore": ">=1.8.3"
+    "underscore": "^1.11.0"
   },
   "devDependencies": {
-    "coffee-script": "1.7.1",
-    "docco": "0.7.0",
-    "eslint": "^6.8.0",
-    "karma": "^0.13.13",
-    "karma-chrome-launcher": "^2.2.0",
-    "karma-qunit": "^1.0.0",
-    "karma-sinon": "^1.0.5",
-    "qunitjs": "^2.0.0",
-    "sinon": "^7.3.1"
+    "@babel/cli": "^7.11.6",
+    "@babel/core": "^7.11.6",
+    "@babel/plugin-proposal-class-properties": "^7.10.4",
+    "@babel/plugin-transform-runtime": "^7.11.5",
+    "@babel/preset-env": "^7.11.5",
+    "babel-eslint": "^10.1.0",
+    "babel-loader": "^8.1.0",
+    "eslint": "^7.8.1",
+    "eslint-plugin-sift": "^0.3.0",
+    "jest": "^26.6.3",
+    "jest-environment-jsdom-sixteen": "^1.0.3",
+    "terser": "^5.5.0",
+    "whatwg-fetch": "^3.5.0"
   },
   "scripts": {
-    "test": "karma start && coffee test/model.coffee && npm run lint",
-    "build": "terser schmackbone.js --mangle --source-map \"filename=schmackbone-min.map\" -o schmackbone-min.js",
-    "doc": "docco schmackbone.js && docco examples/todos/todos.js examples/backbone.localStorage.js",
-    "lint": "eslint schmackbone.js test/*.js"
+    "prepublishOnly": "cp ./lib/add_underscore_methods.js ./",
+    "lint": "eslint lib/*.js test/*.js",
+    "test": "jest --env=jest-environment-jsdom-sixteen",
+    "test:watch": "jest --watch --env=jest-environment-jsdom-sixteen",
+    "test:debug": "node --inspect-brk ./node_modules/.bin/jest --runInBand --env=jest-environment-jsdom-sixteen"
   },
-  "main": "schmackbone.js",
-  "version": "1.5.1",
+  "jest": {
+    "moduleDirectories": [
+      "node_modules"
+    ],
+    "setupFilesAfterEnv": [
+      "./test/setup"
+    ]
+  },
+  "main": "index.js",
+  "module": "index.js",
+  "version": "2.0.0",
   "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./add_underscore_methods": "./lib/add_underscore_methods.js"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/noahgrant/schmackbone.git"
   },
   "files": [
-    "schmackbone.js",
-    "schmackbone-min.js",
-    "schmackbone-min.map",
-    "LICENSE"
+    "index.js",
+    "add_underscore_methods.js",
+    "lib/*.js",
+    "README.md"
   ]
 }

@@ -2,4 +2,5 @@ raw
 *.sw?
 .DS_Store
 node_modules
-bower_components
+coverage
+./add_underscore_methods.js
