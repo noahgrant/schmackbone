@@ -3,3 +3,4 @@ raw
 .DS_Store
 node_modules
 coverage
+./add_underscore_methods.js

@@ -30,9 +30,8 @@
     "whatwg-fetch": "^3.5.0"
   },
   "scripts": {
-    "build": "terser schmackbone.js --mangle --source-map \"filename=schmackbone-min.map\" -o schmackbone-min.js",
-    "prepublishOnly": "babel lib -d ./",
-    "lint": "eslint schmackbone.js test/*.js",
+    "prepublishOnly": "cp ./lib/add_underscore_methods.js ./",
+    "lint": "eslint lib/*.js test/*.js",
     "test": "jest --env=jest-environment-jsdom-sixteen",
     "test:watch": "jest --watch --env=jest-environment-jsdom-sixteen",
     "test:debug": "node --inspect-brk ./node_modules/.bin/jest --runInBand --env=jest-environment-jsdom-sixteen"
@@ -45,15 +44,23 @@
       "./test/setup"
     ]
   },
-  "main": "schmackbone.js",
+  "main": "index.js",
+  "module": "index.js",
   "version": "2.0.0",
   "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./add_underscore_methods": "./lib/add_underscore_methods.js"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/noahgrant/schmackbone.git"
   },
   "files": [
-    "schmackbone.js",
-    "LICENSE"
+    "index.js",
+    "add_underscore_methods.js",
+    "lib/*.js",
+    "README.md"
   ]
 }
