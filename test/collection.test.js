@@ -931,6 +931,19 @@ describe('Schmackbone.Collection', () => {
     expect(coll.findWhere({a: 4})).not.toBeDefined();
   });
 
+  test('filter and find', () => {
+    var _model = new Model({a: 1}),
+        coll = new Collection([_model, {a: 1}, {a: 1, b: 2}, {a: 2, b: 2}, {a: 3}]);
+
+    expect(coll.filter((model) => model.get('a') === 1).length).toEqual(3);
+    expect(coll.filter((model) => model.get('a') === 2).length).toEqual(1);
+    expect(coll.filter((model) => model.get('a') === 3).length).toEqual(1);
+    expect(coll.filter((model) => model.get('b') === 1).length).toEqual(0);
+    expect(coll.filter((model) => model.get('b') === 2).length).toEqual(2);
+    expect(coll.find((model) => model.get('a') === 1)).toEqual(_model);
+    expect(coll.find((model) => model.get('a') === 4)).not.toBeDefined();
+  });
+
   test('reset', () => {
     var resetSpy = jest.fn(),
         models = col.models,
