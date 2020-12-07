@@ -214,6 +214,14 @@ describe('Schmackbone.Model', () => {
     expect(doc.get('author')).toEqual('Bill Shakespeare');
   });
 
+  test('pick', () => {
+    expect(doc.pick('title')).toEqual({title: 'The Tempest'});
+    expect(doc.pick('title', 'author')).toEqual({
+      title: 'The Tempest',
+      author: 'Bill Shakespeare'
+    });
+  });
+
   test('escape', () => {
     expect(doc.escape('title')).toEqual('The Tempest');
     doc.set({audience: 'Bill & Bob'});
