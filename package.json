@@ -30,7 +30,6 @@
     "whatwg-fetch": "^3.5.0"
   },
   "scripts": {
-    "prepublishOnly": "cp ./lib/add_underscore_methods.js ./",
     "lint": "eslint lib/*.js test/*.js",
     "test": "jest --env=jest-environment-jsdom-sixteen",
     "test:watch": "jest --watch --env=jest-environment-jsdom-sixteen",
@@ -59,7 +58,6 @@
   },
   "files": [
     "index.js",
-    "add_underscore_methods.js",
     "lib/*.js",
     "README.md"
   ]
