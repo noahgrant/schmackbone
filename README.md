@@ -206,4 +206,17 @@ By default, the `ajaxPrefilter` function is set to the identity function.
 
 * Note that Schmackbone uses ES2015 in its source and does no transpiling&mdash;including `import`/`export` (Local babel configuration is for testing, only). Unlike Backbone, whose legacy monolith used UMD syntax and could be used directly in the browser, Schmackbone can be used only in modern browsers via the `type="module"` script MIME-type or via a bundler like webpack that handles module transforms.
 
+This means that if you're not babelifying your `node_modules` folder, you'll need to make an exception for this package, ie:
+
+```js
+// webpack.config.js
+module: {
+  rules: [{
+    test: /\.jsx?$/,
+    exclude: /node_modules\/(?!(schmackbone))/,
+    use: {loader: 'babel-loader?cacheDirectory=true'}
+  }]
+}
+```
+
 * For Backbone-related information, see [the website](https://backbonejs.org) and especially its [annotated source page](https://backbonejs.org/docs/backbone.html).
