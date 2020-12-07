@@ -39,6 +39,8 @@ Backbone automatically adds the bulk of the underscore library methods to its [M
 import 'schmackbone/add_underscore_methods';
 ```
 
+(Note that in order to access the `add_underscore_methods` script, you'll need a bundler (or other module loading system) that recognizes the `exports` property in `package.json`. For webpack, this means upgrading to v5.)
+
 ### Modularized
 
 ```js
